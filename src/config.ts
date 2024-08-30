@@ -1,8 +1,9 @@
 import { Database } from './db'
-import { DidResolver } from '@atproto/identity'
+import { HandleResolver, DidResolver } from '@atproto/identity'
 
 export type AppContext = {
   db: Database
+  handleResolver: HandleResolver
   didResolver: DidResolver
   cfg: Config
 }

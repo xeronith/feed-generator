@@ -1,7 +1,7 @@
 import http from 'http'
 import events from 'events'
 import express from 'express'
-import { DidResolver, MemoryCache } from '@atproto/identity'
+import { HandleResolver, DidResolver, MemoryCache } from '@atproto/identity'
 import { createServer } from './lexicon'
 import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
@@ -35,6 +35,7 @@ export class FeedGenerator {
     const firehose = new FirehoseSubscription(db, cfg.subscriptionEndpoint)
 
     const didCache = new MemoryCache()
+    const handleResolver = new HandleResolver()
     const didResolver = new DidResolver({
       plcUrl: 'https://plc.directory',
       didCache,
@@ -50,6 +51,7 @@ export class FeedGenerator {
     })
     const ctx: AppContext = {
       db,
+      handleResolver,
       didResolver,
       cfg,
     }
