@@ -23,6 +23,11 @@ migrations['001'] = {
       .addColumn('service', 'varchar', (col) => col.primaryKey())
       .addColumn('cursor', 'integer', (col) => col.notNull())
       .execute()
+    await db.schema
+      .createTable('feed')
+      .addColumn('identifier', 'varchar(15)', (col) => col.primaryKey())
+      .addColumn('definition', 'text', (col) => col.notNull())
+      .execute()
   },
   async down(db: Kysely<unknown>) {
     await db.schema.dropTable('post').execute()

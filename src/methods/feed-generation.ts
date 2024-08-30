@@ -4,7 +4,7 @@ import { AppContext } from '../config'
 import algos from '../algos'
 import { validateAuth } from '../auth'
 import { AtUri } from '@atproto/syntax'
-import * as did from '../algos/did'
+import * as dynamic from '../algos/dynamic'
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.feed.getFeedSkeleton(async ({ params, req }) => {
@@ -12,13 +12,8 @@ export default function (server: Server, ctx: AppContext) {
     let algo = algos[feedUri.rkey]
 
     if (!algo) {
-      const resolvedHandle = await ctx.handleResolver.resolve(feedUri.rkey)
-      if (resolvedHandle) {
-        params[did.shortname] = resolvedHandle
-        algo = algos[did.shortname]
-      } else {
-        throw new InvalidRequestError('Invalid handle', 'Invalid handle')
-      }
+      algo = algos[dynamic.shortname]
+      params[dynamic.shortname] = feedUri.rkey
     }
 
     if (
