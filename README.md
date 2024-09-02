@@ -37,8 +37,9 @@ To create a custom feed simply post a json payload like the sample below to [htt
 ```json
 {
     "identifier": "sample",
-    "handles": ["user1.bsky.social", "user2.bsky.social"],
-    "tags": ["astronomy"]
+    "users": ["user1.bsky.social", "user2.bsky.social"],
+    "hashtags": ["astronomy"],
+    "search": ["galaxy", "start"]
 }
 ```
 
@@ -49,8 +50,9 @@ Please take a note that it might take quite a while for the firehose to populate
 ```json
 {
     "identifier": "the-feed",
-    "handles": ["news-feed.bsky.social"],
-    "tags": ["the"]
+    "users": ["news-feed.bsky.social"],
+    "hashtags": [],
+    "search": ["the"]
 }
 ```
 
