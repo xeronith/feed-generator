@@ -3,8 +3,9 @@ import { AppContext } from './config'
 
 interface RegisterRequestBody {
   identifier: string
-  handles: string[]
-  tags: string[]
+  users: string[]
+  hashtags: string[]
+  search: string[]
 }
 
 const makeRouter = (ctx: AppContext) => {

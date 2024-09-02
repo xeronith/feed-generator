@@ -14,14 +14,15 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     .executeTakeFirst()
 
   let authors: string[] = []
-  let tags: string[] = []
+  let hashtags: string[] = []
+  let search: string[] = []
 
   if (record) {
     const payload = JSON.parse(record.definition)
 
-    if (payload.handles) {
-      const promises = payload.handles.map(async (handle: string) => {
-        const author = await ctx.handleResolver.resolve(handle)
+    if (payload.users) {
+      const promises = payload.users.map(async (user: string) => {
+        const author = await ctx.handleResolver.resolve(user)
         if (author) {
           return author
         }
@@ -37,14 +38,18 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       })
     }
 
-    if (payload.tags) {
-      tags = payload.tags
+    if (payload.hashtags) {
+      hashtags = payload.hashtags
+    }
+
+    if (payload.search) {
+      search = payload.search
     }
   }
 
   let builder = ctx.db.selectFrom('post').selectAll()
 
-  if (authors.length == 0 && tags.length == 0) {
+  if (authors.length == 0 && hashtags.length == 0 && search.length == 0) {
     builder = builder.where('author', '=', 'unknown')
   }
 
@@ -52,8 +57,12 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     builder = builder.where('author', 'in', authors)
   }
 
-  tags.forEach((tag) => {
-    builder = builder.where('content', 'like', `%${tag}%`)
+  hashtags.forEach((hashtag) => {
+    builder = builder.where('content', 'like', `%${hashtag}%`)
+  })
+
+  search.forEach((criteria) => {
+    builder = builder.where('text', 'like', `%${criteria}%`)
   })
 
   builder = builder
