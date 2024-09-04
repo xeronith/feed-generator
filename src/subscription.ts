@@ -3,15 +3,21 @@ import {
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
+import { BigQuery } from '@google-cloud/bigquery'
+import { Post } from './db/schema'
+import path from 'path'
+
+const bigquery = new BigQuery({
+  projectId: 'robinfeed',
+  keyFilename: path.resolve(__dirname, './key.json'),
+})
+
+let buffer: Post[] = []
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
     const ops = await getOpsByType(evt)
-
-    // This logs the text of every post off the firehose.
-    // Just for fun :)
-    // Delete before actually using
 
     // for (const post of ops.posts.creates) {
     //   console.log(post)
@@ -20,12 +26,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
-        // only alf-related posts
-        // return create.record.text.toLowerCase().includes('alf')
         return true
       })
       .map((create) => {
-        // map alf-related posts to a db row
         return {
           uri: create.uri,
           cid: create.cid,
@@ -42,12 +45,24 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         .where('uri', 'in', postsToDelete)
         .execute()
     }
+
     if (postsToCreate.length > 0) {
-      await this.db
-        .insertInto('post')
-        .values(postsToCreate)
-        .onConflict((oc) => oc.doNothing())
-        .execute()
+      buffer = buffer.concat(postsToCreate)
+      if (buffer.length >= 2500) {
+        bigquery
+          .dataset('Bluesky')
+          .table('Firehose')
+          .insert(buffer)
+          .catch((err) => {
+            console.error(
+              'repo subscription could not flush',
+              JSON.stringify(err, null, 4),
+            )
+          })
+
+        console.log('flush successful')
+        buffer.length = 0
+      }
     }
   }
 }
