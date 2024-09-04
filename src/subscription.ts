@@ -5,16 +5,24 @@ import {
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import { BigQuery } from '@google-cloud/bigquery'
 import { Post } from './db/schema'
+import { Config } from './config'
+import { Database } from './db'
 import path from 'path'
-
-const bigquery = new BigQuery({
-  projectId: 'robinfeed',
-  keyFilename: path.resolve(__dirname, './key.json'),
-})
 
 let buffer: Post[] = []
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
+  protected bigquery: BigQuery
+  
+  constructor(public db: Database, public cfg: Config, public service: string) {
+    super(db, service)
+
+    this.bigquery = new BigQuery({
+      projectId: cfg.bigQueryProjectId,
+      keyFilename: path.resolve(__dirname, cfg.bigQueryKeyFile),
+    })
+  }
+
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
     const ops = await getOpsByType(evt)
@@ -49,9 +57,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     if (postsToCreate.length > 0) {
       buffer = buffer.concat(postsToCreate)
       if (buffer.length >= 2500) {
-        bigquery
-          .dataset('Bluesky')
-          .table('Firehose')
+        this.bigquery
+          .dataset(this.cfg.bigQueryDatasetId)
+          .table(this.cfg.bigQueryTableId)
           .insert(buffer)
           .catch((err) => {
             console.error(

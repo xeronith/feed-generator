@@ -17,4 +17,8 @@ export type Config = {
   serviceDid: string
   publisherDid: string
   subscriptionReconnectDelay: number
+  bigQueryKeyFile: string
+  bigQueryProjectId: string
+  bigQueryDatasetId: string
+  bigQueryTableId: string
 }
