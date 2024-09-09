@@ -13,6 +13,7 @@ export type Config = {
   listenhost: string
   hostname: string
   sqliteLocation: string
+  firehoseEnabled: boolean
   subscriptionEndpoint: string
   serviceDid: string
   publisherDid: string
