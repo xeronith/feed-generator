@@ -13,7 +13,7 @@ let buffer: Post[] = []
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   protected bigquery: BigQuery
-  
+
   constructor(public db: Database, public cfg: Config, public service: string) {
     super(db, service)
 
@@ -55,21 +55,29 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     }
 
     if (postsToCreate.length > 0) {
-      buffer = buffer.concat(postsToCreate)
-      if (buffer.length >= 2500) {
-        this.bigquery
-          .dataset(this.cfg.bigQueryDatasetId)
-          .table(this.cfg.bigQueryTableId)
-          .insert(buffer)
-          .catch((err) => {
-            console.error(
-              'repo subscription could not flush',
-              JSON.stringify(err, null, 4),
-            )
-          })
+      if (this.cfg.bigQueryEnabled) {
+        buffer = buffer.concat(postsToCreate)
+        if (buffer.length >= 2500) {
+          this.bigquery
+            .dataset(this.cfg.bigQueryDatasetId)
+            .table(this.cfg.bigQueryTableId)
+            .insert(buffer)
+            .catch((err) => {
+              console.error(
+                'repo subscription could not flush',
+                JSON.stringify(err, null, 4),
+              )
+            })
 
-        console.log('flush successful')
-        buffer.length = 0
+          console.log('flush successful')
+          buffer.length = 0
+        }
+      } else {
+        await this.db
+          .insertInto('post')
+          .values(postsToCreate)
+          .onConflict((oc) => oc.doNothing())
+          .execute()
       }
     }
   }

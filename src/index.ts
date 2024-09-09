@@ -20,6 +20,7 @@ const run = async () => {
       maybeInt(process.env.FEEDGEN_SUBSCRIPTION_RECONNECT_DELAY) ?? 3000,
     hostname,
     serviceDid,
+    bigQueryEnabled: process.env.BIGQUERY_KEY_FILE ? true : false,
     bigQueryKeyFile: maybeStr(process.env.BIGQUERY_KEY_FILE) ?? '',
     bigQueryProjectId: maybeStr(process.env.BIGQUERY_PROJECT_ID) ?? '',
     bigQueryDatasetId: maybeStr(process.env.BIGQUERY_DATASET_ID) ?? '',
