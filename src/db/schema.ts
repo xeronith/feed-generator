@@ -20,7 +20,11 @@ export type SubState = {
 
 export type Feed = {
   identifier: string
+  displayName: string
+  description: string
   definition: string
+  did: string
+  avatar: string
   draft: number
   createdAt: string
   updatedAt: string

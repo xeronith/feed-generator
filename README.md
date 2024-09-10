@@ -77,6 +77,9 @@ const run = async () => {
 
   await axios.post(feedEndpoint, {
     identifier: 'astronomy-feed',
+    displayName: 'Astronomy',
+    description: 'Lorem ipsum ...',
+    avatar: 'https://picsum.photos/200',
     users: ['user1.bsky.social', 'user2.bsky.social'],
     hashtags: ['#astronomy', '#astrophysics'],
     search: ['nebula', 'galaxy', 'star'],

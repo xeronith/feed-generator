@@ -27,7 +27,11 @@ migrations['001'] = {
     await db.schema
       .createTable('feed')
       .addColumn('identifier', 'varchar(15)', (col) => col.primaryKey())
+      .addColumn('displayName', 'varchar', (col) => col.notNull())
+      .addColumn('description', 'text', (col) => col.notNull())
       .addColumn('definition', 'text', (col) => col.notNull())
+      .addColumn('did', 'varchar', (col) => col.notNull())
+      .addColumn('avatar', 'varchar', (col) => col.notNull())
       .addColumn('draft', 'integer', (col) => col.notNull())
       .addColumn('createdAt', 'varchar', (col) => col.notNull())
       .addColumn('updatedAt', 'varchar', (col) => col.notNull())

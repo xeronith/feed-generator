@@ -25,7 +25,7 @@ export const validateAuth = async (
 }
 
 const agent = new AtpAgent({ service: 'https://bsky.social' })
-const tokenCache: Record<string, { expiry: number }> = {}
+const tokenCache: Record<string, { did: string; expiry: number }> = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
 
 export async function AuthMiddleware(
@@ -36,16 +36,24 @@ export async function AuthMiddleware(
   const authHeader = req.headers['authorization']
 
   if (!authHeader) {
-    return res.status(401).send('authorization header missing')
+    return res.status(401).json({
+      error: 'authorization header missing',
+    })
   }
 
   const token = authHeader.split(' ')[1]
 
   if (!token) {
-    return res.status(401).send('token missing from authorization header')
+    return res
+      .status(401)
+      .json({ error: 'token missing from authorization header' })
   }
 
   if (tokenCache[token] && tokenCache[token].expiry > Date.now()) {
+    req['bsky'] = {
+      did: tokenCache[token].did,
+    }
+
     return next()
   } else {
     try {
@@ -56,13 +64,21 @@ export async function AuthMiddleware(
 
       if (!result.success) {
         delete tokenCache[token]
-        return res.status(401).send('token could not be verified')
+        return res.status(401).json({ error: 'token could not be verified' })
       }
 
-      tokenCache[token] = { expiry: Date.now() + CACHE_EXPIRY_MS }
+      tokenCache[token] = {
+        did: result.data.did,
+        expiry: Date.now() + CACHE_EXPIRY_MS,
+      }
+
+      req['bsky'] = {
+        did: tokenCache[token].did,
+      }
+
       return next()
     } catch (error) {
-      return res.status(401).send('invalid token')
+      return res.status(401).json({ error: 'invalid token' })
     }
   }
 }

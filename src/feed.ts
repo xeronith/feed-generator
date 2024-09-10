@@ -3,6 +3,9 @@ import { AppContext } from './config'
 
 interface RegisterRequestBody {
   identifier: string
+  displayName: string
+  description: string
+  avatar: string
   users: string[]
   hashtags: string[]
   search: string[]
@@ -11,7 +14,7 @@ interface RegisterRequestBody {
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
 
-  router.get('/feed', async (_req, res) => {
+  router.get('/feed', async (req, res) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
     }
@@ -19,7 +22,13 @@ const makeRouter = (ctx: AppContext) => {
     try {
       const result = await ctx.db
         .selectFrom('feed')
-        .selectAll()
+        .select('identifier')
+        .select('displayName')
+        .select('description')
+        .select('definition')
+        .select('avatar')
+        .select('createdAt')
+        .where('did', '=', req['bsky'].did)
         .orderBy('createdAt', 'desc')
         .execute()
 
@@ -31,12 +40,12 @@ const makeRouter = (ctx: AppContext) => {
     }
   })
 
-  router.post('/feed', async (_req, res) => {
+  router.post('/feed', async (req, res) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
     }
 
-    const payload = _req.body as RegisterRequestBody
+    const payload = req.body as RegisterRequestBody
     if (!payload.identifier || payload.identifier.trim().length > 15) {
       return res.sendStatus(400)
     }
@@ -47,7 +56,11 @@ const makeRouter = (ctx: AppContext) => {
         .insertInto('feed')
         .values({
           identifier: payload.identifier,
+          displayName: payload.displayName,
+          description: payload.description,
           definition: JSON.stringify(payload),
+          did: req['bsky'].did,
+          avatar: payload.avatar,
           draft: 1,
           createdAt: timestamp,
           updatedAt: timestamp,
