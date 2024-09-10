@@ -10,6 +10,7 @@ import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import feed from './feed'
+import { AuthMiddleware } from './auth'
 
 export class FeedGenerator {
   public app: express.Application
@@ -32,6 +33,7 @@ export class FeedGenerator {
 
   static create(cfg: Config) {
     const app = express()
+    app.use(AuthMiddleware)
     const db = createDb(cfg.sqliteLocation)
     const firehose = new FirehoseSubscription(db, cfg, cfg.subscriptionEndpoint)
 

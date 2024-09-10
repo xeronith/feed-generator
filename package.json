@@ -10,7 +10,8 @@
     "publishFeed": "ts-node scripts/publishFeedGen.ts",
     "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts",
     "resolve": "ts-node scripts/resolveHandle.ts",
-    "profile": "ts-node scripts/getProfile",
+    "profile": "ts-node scripts/getProfile.ts",
+    "feed": "ts-node scripts/feed.ts",
     "start": "ts-node src/index.ts",
     "build": "tsc"
   },
@@ -22,6 +23,7 @@
     "@atproto/syntax": "^0.1.2",
     "@atproto/xrpc-server": "^0.6.0",
     "@google-cloud/bigquery": "^7.9.0",
+    "axios": "^1.7.7",
     "better-sqlite3": "^8.3.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
