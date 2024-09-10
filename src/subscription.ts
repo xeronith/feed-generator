@@ -3,7 +3,7 @@ import {
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
-import { BigQuery } from '@google-cloud/bigquery'
+import { BigQuery, BigQueryOptions } from '@google-cloud/bigquery'
 import { Post } from './db/schema'
 import { Config } from './config'
 import { Database } from './db'
@@ -17,10 +17,15 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
   constructor(public db: Database, public cfg: Config, public service: string) {
     super(db, service)
 
-    this.bigquery = new BigQuery({
+    const opts: BigQueryOptions = {
       projectId: cfg.bigQueryProjectId,
-      keyFilename: path.resolve(__dirname, cfg.bigQueryKeyFile),
-    })
+    }
+
+    if (cfg.bigQueryKeyFile !== 'implicit') {
+      opts.keyFilename = path.resolve(__dirname, cfg.bigQueryKeyFile)
+    }
+
+    this.bigquery = new BigQuery(opts)
   }
 
   async handleEvent(evt: RepoEvent) {
