@@ -57,3 +57,35 @@ Please take a note that it might take quite a while for the firehose to populate
 ```
 
 This can be accessed at [http://localhost:3000/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://did:example:alice/app.bsky.feed.generator/the-feed](http://localhost:3000/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://did:example:alice/app.bsky.feed.generator/the-feed)
+
+Here's a sample of how you can authenticate, create and retrieve your feeds:
+
+```typescript
+import axios from 'axios'
+import { AtpAgent } from '@atproto/api'
+
+const run = async () => {
+  const feedEndpoint = 'http://localhost:3000/feed'
+  const agent = new AtpAgent({ service: 'https://bsky.social' })
+  
+  const loginResponse = await agent.login({
+    identifier: "", // Use your Bluesky account
+    password: "", // Use your app password
+  })
+
+  axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessJwt}`;
+
+  await axios.post(feedEndpoint, {
+    identifier: 'astronomy-feed',
+    users: ['user1.bsky.social', 'user2.bsky.social'],
+    hashtags: ['#astronomy', '#astrophysics'],
+    search: ['nebula', 'galaxy', 'star'],
+  })
+
+  const getFeedResponse = await axios.get(feedEndpoint)
+
+  console.log(getFeedResponse.data)
+}
+
+run()
+```
