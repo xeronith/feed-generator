@@ -25,7 +25,7 @@ export type Feed = {
   definition: string
   did: string
   avatar: string
-  draft: number
+  state: string
   createdAt: string
   updatedAt: string
 }

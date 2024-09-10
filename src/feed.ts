@@ -11,12 +11,61 @@ interface RegisterRequestBody {
   search: string[]
 }
 
+interface UpdateStateRequestBody {
+  state?: string
+}
+
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
+
+  const allowedStates = ['draft', 'ready', 'published']
+  router.put('/feed/:identifier', async (req, res) => {
+    if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
+      return res.sendStatus(404)
+    }
+
+    const identifier = req.params.identifier
+    const payload = req.body as UpdateStateRequestBody
+    if (!payload.state) {
+      payload.state = 'draft'
+    }
+
+    if (!allowedStates.includes(payload.state)) {
+      return res.status(400).json({
+        error: 'invalid state',
+      })
+    }
+
+    try {
+      await ctx.db
+        .updateTable('feed')
+        .set({
+          state: payload.state,
+          updatedAt: new Date().toISOString(),
+        })
+        .where('identifier', '=', identifier)
+        .where('did', '=', req['bsky'].did)
+        .execute()
+    } catch (error) {
+      return res.status(500).json({
+        error: 'failed',
+      })
+    }
+
+    res.status(200).json({
+      status: 'updated',
+    })
+  })
 
   router.get('/feed', async (req, res) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
+    }
+
+    const queryState = req.query.state as string | undefined
+    let state = 'draft'
+    if (queryState && allowedStates.includes(queryState)) {
+      state = queryState
     }
 
     try {
@@ -27,8 +76,10 @@ const makeRouter = (ctx: AppContext) => {
         .select('description')
         .select('definition')
         .select('avatar')
+        .select('state')
         .select('createdAt')
         .where('did', '=', req['bsky'].did)
+        .where('state', '=', state)
         .orderBy('createdAt', 'desc')
         .execute()
 
@@ -61,13 +112,12 @@ const makeRouter = (ctx: AppContext) => {
           definition: JSON.stringify(payload),
           did: req['bsky'].did,
           avatar: payload.avatar,
-          draft: 1,
+          state: 'draft',
           createdAt: timestamp,
           updatedAt: timestamp,
         })
         .execute()
     } catch (error) {
-      console.log(error)
       return res.status(500).json({
         error: 'failed',
       })

@@ -32,7 +32,7 @@ migrations['001'] = {
       .addColumn('definition', 'text', (col) => col.notNull())
       .addColumn('did', 'varchar', (col) => col.notNull())
       .addColumn('avatar', 'varchar', (col) => col.notNull())
-      .addColumn('draft', 'integer', (col) => col.notNull())
+      .addColumn('state', 'varchar', (col) => col.notNull())
       .addColumn('createdAt', 'varchar', (col) => col.notNull())
       .addColumn('updatedAt', 'varchar', (col) => col.notNull())
       .execute()

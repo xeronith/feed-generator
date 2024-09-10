@@ -75,6 +75,7 @@ const run = async () => {
 
   axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessJwt}`;
 
+  // create feed (default state is draft)
   await axios.post(feedEndpoint, {
     identifier: 'astronomy-feed',
     displayName: 'Astronomy',
@@ -85,9 +86,33 @@ const run = async () => {
     search: ['nebula', 'galaxy', 'star'],
   })
 
-  const getFeedResponse = await axios.get(feedEndpoint)
+  // get draft feeds
+  {
+    const getFeedResponse = await axios.get(feedEndpoint)
+    console.log(getFeedResponse.data)
+  }
 
-  console.log(getFeedResponse.data)
+  // update feed state
+  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+    state: 'ready',
+  })
+
+  // get feeds by state
+  {
+    const getFeedResponse = await axios.get(`${feedEndpoint}?state=ready`)
+    console.log(getFeedResponse.data)
+  }
+
+  // update feed state
+  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+    state: 'published',
+  })
+
+  // get feeds state
+  {
+    const getFeedResponse = await axios.get(`${feedEndpoint}?state=published`)
+    console.log(getFeedResponse.data)
+  }
 }
 
 run()
