@@ -29,20 +29,21 @@ const run = async () => {
   ] = `Bearer ${loginResponse.data.accessJwt}`
 
   const feedEndpoint = 'http://localhost:3000/feed'
+  const feedIdentifier = 'astronomy-feed'
 
   // delete feed
-  await axios.delete(`${feedEndpoint}/astronomy-feed`);
+  await axios.delete(`${feedEndpoint}/${feedIdentifier}`)
 
   // create feed (default state is draft)
   await axios.post(feedEndpoint, {
-    identifier: 'astronomy-feed',
+    identifier: `${feedIdentifier}`,
     displayName: 'Astronomy',
     description: 'Lorem ipsum ...',
     avatar: 'https://picsum.photos/200',
     users: ['user1.bsky.social', 'user2.bsky.social'],
     hashtags: ['#astronomy', '#astrophysics'],
     mentions: ['@user1', '@user2'],
-    search: ['nebula', 'galaxy', 'star']
+    search: ['nebula', 'galaxy', 'star'],
   })
 
   // get draft feeds
@@ -52,19 +53,19 @@ const run = async () => {
   }
 
   // update feed
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     displayName: 'Modified display name',
     description: 'Modified description',
     avatar: 'https://picsum.photos/100',
   })
 
   // pin feed
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     pinned: true,
   })
 
   // bookmark feed
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     favorite: true,
   })
 
@@ -75,7 +76,7 @@ const run = async () => {
   }
 
   // update feed state
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     state: 'ready',
   })
 
@@ -86,7 +87,7 @@ const run = async () => {
   }
 
   // update feed state
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     state: 'published',
   })
 

@@ -162,7 +162,12 @@ const makeRouter = (ctx: AppContext) => {
         .orderBy('createdAt', 'desc')
         .execute()
 
-      res.status(200).json(result)
+      res.status(200).json(
+        result.map((feed) => ({
+          ...feed,
+          url: `https://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}`,
+        })),
+      )
     } catch (error) {
       return res.status(500).json({
         error: 'failed',
@@ -209,6 +214,12 @@ const makeRouter = (ctx: AppContext) => {
         })
         .execute()
     } catch (error) {
+      if (error.code && error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
+        return res.status(400).json({
+          error: 'feed identifier already exists',
+        })
+      }
+
       return res.status(500).json({
         error: 'failed',
       })

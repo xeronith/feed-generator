@@ -73,7 +73,6 @@ import axios from 'axios'
 import { AtpAgent } from '@atproto/api'
 
 const run = async () => {
-  const feedEndpoint = 'http://localhost:3000/feed'
   const agent = new AtpAgent({ service: 'https://bsky.social' })
   
   const loginResponse = await agent.login({
@@ -81,14 +80,17 @@ const run = async () => {
     password: "", // Use your app password
   })
 
-  axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessJwt}`;
+  axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessJwt}`
+
+  const feedEndpoint = 'http://localhost:3000/feed'
+  const feedIdentifier = 'astronomy-feed'
 
   // delete feed
-  await axios.delete(`${feedEndpoint}/astronomy-feed`);
+  await axios.delete(`${feedEndpoint}/${feedIdentifier}`)
   
   // create feed (default state is draft)
   await axios.post(feedEndpoint, {
-    identifier: 'astronomy-feed',
+    identifier: `${feedIdentifier}`,
     displayName: 'Astronomy',
     description: 'Lorem ipsum ...',
     avatar: 'https://picsum.photos/200',
@@ -105,19 +107,19 @@ const run = async () => {
   }
 
   // update feed
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     displayName: 'Modified display name',
     description: 'Modified description',
     avatar: 'https://picsum.photos/100',
   })
 
   // pin feed
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     pinned: true,
   })
 
   // bookmark feed
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     favorite: true,
   })
 
@@ -128,7 +130,7 @@ const run = async () => {
   }
 
   // update feed state
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     state: 'ready',
   })
 
@@ -139,7 +141,7 @@ const run = async () => {
   }
 
   // update feed state
-  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     state: 'published',
   })
 
