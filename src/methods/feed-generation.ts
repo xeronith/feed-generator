@@ -17,7 +17,7 @@ export default function (server: Server, ctx: AppContext) {
     }
 
     if (
-      feedUri.hostname !== ctx.cfg.publisherDid ||
+      // feedUri.hostname !== ctx.cfg.publisherDid ||
       feedUri.collection !== 'app.bsky.feed.generator' ||
       !algo
     ) {

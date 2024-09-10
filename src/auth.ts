@@ -33,6 +33,11 @@ export async function AuthMiddleware(
   res: Response,
   next: NextFunction,
 ) {
+  const excludedRoutes = ['/xrpc/app.bsky.feed.getFeedSkeleton']
+  if (excludedRoutes.includes(req.path)) {
+    return next()
+  }
+
   const authHeader = req.headers['authorization']
 
   if (!authHeader) {
