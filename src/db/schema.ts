@@ -21,4 +21,7 @@ export type SubState = {
 export type Feed = {
   identifier: string
   definition: string
+  draft: number
+  createdAt: string
+  updatedAt: string
 }

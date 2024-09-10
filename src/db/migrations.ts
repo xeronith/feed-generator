@@ -28,10 +28,14 @@ migrations['001'] = {
       .createTable('feed')
       .addColumn('identifier', 'varchar(15)', (col) => col.primaryKey())
       .addColumn('definition', 'text', (col) => col.notNull())
+      .addColumn('draft', 'integer', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .addColumn('updatedAt', 'varchar', (col) => col.notNull())
       .execute()
   },
   async down(db: Kysely<unknown>) {
     await db.schema.dropTable('post').execute()
     await db.schema.dropTable('sub_state').execute()
+    await db.schema.dropTable('feed').execute()
   },
 }

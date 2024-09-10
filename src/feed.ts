@@ -11,6 +11,26 @@ interface RegisterRequestBody {
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
 
+  router.get('/feed', async (_req, res) => {
+    if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
+      return res.sendStatus(404)
+    }
+
+    try {
+      const result = await ctx.db
+        .selectFrom('feed')
+        .selectAll()
+        .orderBy('createdAt', 'desc')
+        .execute()
+
+      res.status(200).json(result)
+    } catch (error) {
+      return res.status(500).json({
+        error: 'failed',
+      })
+    }
+  })
+
   router.post('/feed', async (_req, res) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
@@ -22,14 +42,19 @@ const makeRouter = (ctx: AppContext) => {
     }
 
     try {
+      const timestamp = new Date().toISOString()
       await ctx.db
         .insertInto('feed')
         .values({
           identifier: payload.identifier,
           definition: JSON.stringify(payload),
+          draft: 1,
+          createdAt: timestamp,
+          updatedAt: timestamp,
         })
         .execute()
     } catch (error) {
+      console.log(error)
       return res.status(500).json({
         error: 'failed',
       })
