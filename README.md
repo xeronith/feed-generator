@@ -37,9 +37,13 @@ To create a custom feed simply post a json payload like the sample below to [htt
 ```json
 {
     "identifier": "sample",
+    "displayName": "Sample",
+    "description": "Lorem ipsum ...",
+    "avatar": "https://picsum.photos/200",
     "users": ["user1.bsky.social", "user2.bsky.social"],
-    "hashtags": ["astronomy"],
-    "search": ["galaxy", "start"]
+    "hashtags": ["#astronomy"],
+    "mentions": ["@user1", "@user2"],
+    "search": ["galaxy", "star"]
 }
 ```
 
@@ -50,8 +54,12 @@ Please take a note that it might take quite a while for the firehose to populate
 ```json
 {
     "identifier": "the-feed",
+    "displayName": "The Feed",
+    "description": "Lorem ipsum ...",
+    "avatar": "https://picsum.photos/200",
     "users": ["news-feed.bsky.social"],
     "hashtags": [],
+    "mentions": [],
     "search": ["the"]
 }
 ```
@@ -75,6 +83,9 @@ const run = async () => {
 
   axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessJwt}`;
 
+  // delete feed
+  await axios.delete(`${feedEndpoint}/astronomy-feed`);
+  
   // create feed (default state is draft)
   await axios.post(feedEndpoint, {
     identifier: 'astronomy-feed',
@@ -83,7 +94,31 @@ const run = async () => {
     avatar: 'https://picsum.photos/200',
     users: ['user1.bsky.social', 'user2.bsky.social'],
     hashtags: ['#astronomy', '#astrophysics'],
+    mentions: ['@user1', '@user2'],
     search: ['nebula', 'galaxy', 'star'],
+  })
+
+  // get draft feeds
+  {
+    const getFeedResponse = await axios.get(feedEndpoint)
+    console.log(getFeedResponse.data)
+  }
+
+  // update feed
+  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+    displayName: 'Modified display name',
+    description: 'Modified description',
+    avatar: 'https://picsum.photos/100',
+  })
+
+  // pin feed
+  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+    pinned: true,
+  })
+
+  // bookmark feed
+  await axios.put(`${feedEndpoint}/astronomy-feed`, {
+    favorite: true,
   })
 
   // get draft feeds

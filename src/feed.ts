@@ -6,12 +6,21 @@ interface RegisterRequestBody {
   displayName: string
   description: string
   avatar: string
+  pinned?: boolean
+  favorite?: boolean
+  state?: string
   users: string[]
   hashtags: string[]
+  mentions: string[]
   search: string[]
 }
 
 interface UpdateStateRequestBody {
+  displayName?: string
+  description?: string
+  avatar?: string
+  pinned?: boolean
+  favorite?: boolean
   state?: string
 }
 
@@ -26,23 +35,91 @@ const makeRouter = (ctx: AppContext) => {
 
     const identifier = req.params.identifier
     const payload = req.body as UpdateStateRequestBody
-    if (!payload.state) {
-      payload.state = 'draft'
-    }
 
-    if (!allowedStates.includes(payload.state)) {
-      return res.status(400).json({
-        error: 'invalid state',
+    try {
+      let modified: number = 0
+      let builder = ctx.db.updateTable('feed')
+
+      if ('displayName' in payload && payload.displayName) {
+        modified++
+        builder = builder.set({
+          displayName: payload.displayName.trim(),
+        })
+      }
+
+      if ('description' in payload && payload.description) {
+        modified++
+        builder = builder.set({
+          description: payload.description.trim(),
+        })
+      }
+
+      if ('avatar' in payload && payload.avatar) {
+        modified++
+        builder = builder.set({
+          avatar: payload.avatar.trim(),
+        })
+      }
+
+      if ('state' in payload) {
+        if (payload.state && !allowedStates.includes(payload.state)) {
+          return res.status(400).json({
+            error: 'invalid state',
+          })
+        }
+
+        modified++
+        builder = builder.set({
+          state: payload.state,
+        })
+      }
+
+      if ('pinned' in payload) {
+        modified++
+        builder = builder.set({
+          pinned: payload.pinned ? 1 : 0,
+        })
+      }
+
+      if ('favorite' in payload) {
+        modified++
+        builder = builder.set({
+          favorite: payload.favorite ? 1 : 0,
+        })
+      }
+
+      if (modified > 0) {
+        builder = builder.set({
+          updatedAt: new Date().toISOString(),
+        })
+      }
+
+      builder = builder
+        .where('identifier', '=', identifier)
+        .where('did', '=', req['bsky'].did)
+
+      await builder.execute()
+    } catch (error) {
+      return res.status(500).json({
+        error: 'failed',
       })
     }
 
+    res.status(200).json({
+      status: 'updated',
+    })
+  })
+
+  router.delete('/feed/:identifier', async (req, res) => {
+    if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
+      return res.sendStatus(404)
+    }
+
+    const identifier = req.params.identifier
+
     try {
       await ctx.db
-        .updateTable('feed')
-        .set({
-          state: payload.state,
-          updatedAt: new Date().toISOString(),
-        })
+        .deleteFrom('feed')
         .where('identifier', '=', identifier)
         .where('did', '=', req['bsky'].did)
         .execute()
@@ -53,7 +130,7 @@ const makeRouter = (ctx: AppContext) => {
     }
 
     res.status(200).json({
-      status: 'updated',
+      status: 'deleted',
     })
   })
 
@@ -76,6 +153,8 @@ const makeRouter = (ctx: AppContext) => {
         .select('description')
         .select('definition')
         .select('avatar')
+        .select('pinned')
+        .select('favorite')
         .select('state')
         .select('createdAt')
         .where('did', '=', req['bsky'].did)
@@ -101,6 +180,16 @@ const makeRouter = (ctx: AppContext) => {
       return res.sendStatus(400)
     }
 
+    if (
+      'state' in payload &&
+      payload.state &&
+      !allowedStates.includes(payload.state)
+    ) {
+      return res.status(400).json({
+        error: 'invalid state',
+      })
+    }
+
     try {
       const timestamp = new Date().toISOString()
       await ctx.db
@@ -112,7 +201,9 @@ const makeRouter = (ctx: AppContext) => {
           definition: JSON.stringify(payload),
           did: req['bsky'].did,
           avatar: payload.avatar,
-          state: 'draft',
+          pinned: payload.pinned ? 1 : 0,
+          favorite: payload.favorite ? 1 : 0,
+          state: payload.state ?? 'draft',
           createdAt: timestamp,
           updatedAt: timestamp,
         })

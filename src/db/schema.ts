@@ -25,6 +25,8 @@ export type Feed = {
   definition: string
   did: string
   avatar: string
+  pinned: number
+  favorite: number
   state: string
   createdAt: string
   updatedAt: string

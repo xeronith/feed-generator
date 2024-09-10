@@ -17,6 +17,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
 
   let authors: string[] = []
   let hashtags: string[] = []
+  let mentions: string[] = []
   let search: string[] = []
 
   if (record) {
@@ -44,6 +45,10 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       hashtags = payload.hashtags
     }
 
+    if (payload.mentions) {
+      mentions = payload.mentions
+    }
+
     if (payload.search) {
       search = payload.search
     }
@@ -52,7 +57,12 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
   if (ctx.cfg.bigQueryEnabled) {
     let query = `SELECT * FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE `
 
-    if (authors.length == 0 && hashtags.length == 0 && search.length == 0) {
+    if (
+      authors.length === 0 &&
+      hashtags.length === 0 &&
+      mentions.length === 0 &&
+      search.length === 0
+    ) {
       query += `\`author\` = 'unknown'`
     } else {
       const conditions: string[] = []
@@ -63,6 +73,10 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
 
       hashtags.forEach((hashtag) => {
         conditions.push(`\`text\` LIKE '%${hashtag}%'`)
+      })
+
+      mentions.forEach((mention) => {
+        conditions.push(`\`text\` LIKE '%${mention}%'`)
       })
 
       search.forEach((criteria) => {
@@ -102,11 +116,15 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       cursor,
       feed,
     }
-  
   } else {
     let builder = ctx.db.selectFrom('post').selectAll()
 
-    if (authors.length == 0 && hashtags.length == 0 && search.length == 0) {
+    if (
+      authors.length === 0 &&
+      hashtags.length === 0 &&
+      mentions.length === 0 &&
+      search.length === 0
+    ) {
       builder = builder.where('author', '=', 'unknown')
     }
 
@@ -115,7 +133,11 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     }
 
     hashtags.forEach((hashtag) => {
-      builder = builder.where('content', 'like', `%${hashtag}%`)
+      builder = builder.where('text', 'like', `%${hashtag}%`)
+    })
+
+    mentions.forEach((mention) => {
+      builder = builder.where('text', 'like', `%${mention}%`)
     })
 
     search.forEach((criteria) => {
@@ -131,7 +153,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
       builder = builder.where('post.indexedAt', '<', timeStr)
     }
-    
+
     const res = await builder.execute()
 
     const feed = res.map((row) => ({
