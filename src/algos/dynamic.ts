@@ -95,7 +95,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     let cursor: string | undefined
     const last = res.at(-1)
     if (last) {
-      cursor = new Date(last.indexedAt).getTime().toString(10)
+      cursor = new Date(last.indexedAt.value).getTime().toString(10)
     }
 
     return {
