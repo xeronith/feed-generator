@@ -181,8 +181,14 @@ const makeRouter = (ctx: AppContext) => {
     }
 
     const payload = req.body as RegisterRequestBody
-    if (!payload.identifier || payload.identifier.trim().length > 15) {
-      return res.sendStatus(400)
+    if (
+      !payload.identifier ||
+      payload.identifier.trim().length < 2 ||
+      payload.identifier.trim().length > 15
+    ) {
+      return res.status(400).json({
+        error: 'invalid identifier',
+      })
     }
 
     if (
@@ -200,12 +206,12 @@ const makeRouter = (ctx: AppContext) => {
       await ctx.db
         .insertInto('feed')
         .values({
-          identifier: payload.identifier,
-          displayName: payload.displayName,
-          description: payload.description,
+          identifier: payload.identifier.trim(),
+          displayName: payload.displayName?.trim(),
+          description: payload.description?.trim(),
           definition: JSON.stringify(payload),
           did: req['bsky'].did,
-          avatar: payload.avatar,
+          avatar: payload.avatar.trim(),
           pinned: payload.pinned ? 1 : 0,
           favorite: payload.favorite ? 1 : 0,
           state: payload.state ?? 'draft',
