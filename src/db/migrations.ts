@@ -34,6 +34,7 @@ migrations['001'] = {
       .addColumn('avatar', 'varchar', (col) => col.notNull())
       .addColumn('pinned', 'integer', (col) => col.notNull())
       .addColumn('favorite', 'integer', (col) => col.notNull())
+      .addColumn('type', 'varchar', (col) => col.notNull())
       .addColumn('state', 'varchar', (col) => col.notNull())
       .addColumn('createdAt', 'varchar', (col) => col.notNull())
       .addColumn('updatedAt', 'varchar', (col) => col.notNull())

@@ -27,6 +27,7 @@ export type Feed = {
   avatar: string
   pinned: number
   favorite: number
+  type: string
   state: string
   createdAt: string
   updatedAt: string

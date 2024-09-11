@@ -98,6 +98,7 @@ const run = async () => {
     hashtags: ['#astronomy', '#astrophysics'],
     mentions: ['@user1', '@user2'],
     search: ['nebula', 'galaxy', 'star'],
+    type: 'mixed',
   })
 
   // get draft feeds
@@ -121,6 +122,17 @@ const run = async () => {
   // bookmark feed
   await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     favorite: true,
+  })
+
+  // get draft feeds
+  {
+    const getFeedResponse = await axios.get(feedEndpoint)
+    console.log(getFeedResponse.data)
+  }
+
+  // update feed type
+  await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
+    type: 'search',
   })
 
   // get draft feeds

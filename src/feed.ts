@@ -8,6 +8,7 @@ interface RegisterRequestBody {
   avatar: string
   pinned?: boolean
   favorite?: boolean
+  type?: string
   state?: string
   users: string[]
   hashtags: string[]
@@ -21,6 +22,7 @@ interface UpdateStateRequestBody {
   avatar?: string
   pinned?: boolean
   favorite?: boolean
+  type?: string
   state?: string
 }
 
@@ -58,6 +60,13 @@ const makeRouter = (ctx: AppContext) => {
         modified++
         builder = builder.set({
           avatar: payload.avatar.trim(),
+        })
+      }
+
+      if ('type' in payload) {
+        modified++
+        builder = builder.set({
+          type: payload.type ?? '',
         })
       }
 
@@ -155,6 +164,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('avatar')
         .select('pinned')
         .select('favorite')
+        .select('type')
         .select('state')
         .select('createdAt')
         .where('did', '=', req['bsky'].did)
@@ -214,6 +224,7 @@ const makeRouter = (ctx: AppContext) => {
           avatar: payload.avatar.trim(),
           pinned: payload.pinned ? 1 : 0,
           favorite: payload.favorite ? 1 : 0,
+          type: payload.type ?? '',
           state: payload.state ?? 'draft',
           createdAt: timestamp,
           updatedAt: timestamp,
