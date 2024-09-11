@@ -15,15 +15,20 @@ const run = async () => {
   const handle = process.env.FEEDGEN_PUBLISH_HANDLE,
     password = process.env.FEEDGEN_PUBLISH_APP_PASSWORD
 
+  let profileHandle = process.env.FEEDGEN_PUBLISH_HANDLE
+  if (process.argv[2]) {
+    profileHandle = process.argv[2]
+  }
+
   // only update this if in a test environment
   const agent = new AtpAgent({ service: 'https://bsky.social' })
   await agent.login({ identifier: handle, password })
 
   console.log(
     await agent.api.app.bsky.actor.getProfile({
-      actor: process.argv[2],
+      actor: profileHandle,
     }),
-  )  
+  )
 }
 
 run()

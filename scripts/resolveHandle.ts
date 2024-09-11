@@ -12,12 +12,13 @@ const run = async () => {
     throw new Error('Please provide an app password in the .env file')
   }
 
-  const handle = process.env.FEEDGEN_PUBLISH_HANDLE,
-    password = process.env.FEEDGEN_PUBLISH_APP_PASSWORD
+  let handle = process.env.FEEDGEN_PUBLISH_HANDLE
+  if (process.argv[2]) {
+    handle = process.argv[2]
+  }
 
   // only update this if in a test environment
   const agent = new AtpAgent({ service: 'https://bsky.social' })
-  await agent.login({ identifier: handle, password })
 
   try {
     // Use the resolveHandle method to get the DID
