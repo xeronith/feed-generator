@@ -211,16 +211,19 @@ const makeRouter = (ctx: AppContext) => {
       })
     }
 
+    const did = req['bsky'].did
+    const identifier = payload.identifier.trim()
+
     try {
       const timestamp = new Date().toISOString()
       await ctx.db
         .insertInto('feed')
         .values({
-          identifier: payload.identifier.trim(),
+          identifier: identifier,
           displayName: payload.displayName?.trim(),
           description: payload.description?.trim(),
           definition: JSON.stringify(payload),
-          did: req['bsky'].did,
+          did: did,
           avatar: payload.avatar.trim(),
           pinned: payload.pinned ? 1 : 0,
           favorite: payload.favorite ? 1 : 0,
@@ -244,6 +247,9 @@ const makeRouter = (ctx: AppContext) => {
 
     res.status(201).json({
       status: 'created',
+      identifier: identifier,
+      did: did,
+      url: `https://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${did}/app.bsky.feed.generator/${identifier}`,
     })
   })
 

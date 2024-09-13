@@ -35,7 +35,7 @@ const run = async () => {
   await axios.delete(`${feedEndpoint}/${feedIdentifier}`)
 
   // create feed (default state is draft)
-  await axios.post(feedEndpoint, {
+  const postFeedResponse = await axios.post(feedEndpoint, {
     identifier: `${feedIdentifier}`,
     displayName: 'Astronomy',
     description: 'Lorem ipsum ...',
@@ -46,6 +46,8 @@ const run = async () => {
     search: ['nebula', 'galaxy', 'star'],
     type: 'mixed',
   })
+
+  console.log(postFeedResponse.data)
 
   // get draft feeds
   {
