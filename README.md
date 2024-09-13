@@ -107,6 +107,12 @@ const run = async () => {
     console.log(getFeedResponse.data)
   }
 
+  // get feed with identifier
+  {
+    const getFeedResponse = await axios.get(`${feedEndpoint}/${feedIdentifier}`)
+    console.log(getFeedResponse.data)
+  }
+
   // update feed
   await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
     displayName: 'Modified display name',

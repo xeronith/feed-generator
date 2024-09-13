@@ -143,6 +143,46 @@ const makeRouter = (ctx: AppContext) => {
     })
   })
 
+  router.get('/feed/:identifier', async (req, res) => {
+    if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
+      return res.sendStatus(404)
+    }
+
+    const identifier = req.params.identifier
+
+    try {
+      const result = await ctx.db
+        .selectFrom('feed')
+        .select('identifier')
+        .select('displayName')
+        .select('description')
+        .select('definition')
+        .select('avatar')
+        .select('pinned')
+        .select('favorite')
+        .select('type')
+        .select('state')
+        .select('createdAt')
+        .where('did', '=', req['bsky'].did)
+        .where('identifier', '=', identifier)
+        .orderBy('createdAt', 'desc')
+        .executeTakeFirst()
+
+      if (!result) {
+        return res.sendStatus(404)
+      }
+
+      res.status(200).json({
+        ...result,
+        url: `https://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${result.identifier}`,
+      })
+    } catch (error) {
+      return res.status(500).json({
+        error: 'failed',
+      })
+    }
+  })
+
   router.get('/feed', async (req, res) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
