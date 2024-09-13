@@ -7,8 +7,8 @@
   "author": "dholms <dtholmgren@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "publishFeed": "ts-node scripts/publishFeedGen.ts",
-    "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts",
+    "publish": "ts-node scripts/publishFeed.ts",
+    "unpublish": "ts-node scripts/unpublishFeed.ts",
     "resolve": "ts-node scripts/resolveHandle.ts",
     "profile": "ts-node scripts/getProfile.ts",
     "feed": "ts-node scripts/feed.ts",
