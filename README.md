@@ -118,6 +118,10 @@ const run = async () => {
     displayName: 'Modified display name',
     description: 'Modified description',
     avatar: 'https://picsum.photos/100',
+    users: ['user3.bsky.social', 'user4.bsky.social'],
+    hashtags: ['#astronomy-modified', '#astrophysics-modified'],
+    mentions: ['@user3', '@user4'],
+    search: ['nebula-modified', 'galaxy-modified', 'star-modified'],
   })
 
   // pin feed

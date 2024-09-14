@@ -24,6 +24,10 @@ interface UpdateStateRequestBody {
   favorite?: boolean
   type?: string
   state?: string
+  users: string[]
+  hashtags: string[]
+  mentions: string[]
+  search: string[]
 }
 
 const makeRouter = (ctx: AppContext) => {
@@ -39,34 +43,59 @@ const makeRouter = (ctx: AppContext) => {
     const payload = req.body as UpdateStateRequestBody
 
     try {
+      const record = await ctx.db
+        .selectFrom('feed')
+        .selectAll()
+        .where('did', '=', req['bsky'].did)
+        .where('identifier', '=', identifier)
+        .executeTakeFirst()
+
+      if (!record) {
+        return res.sendStatus(404)
+      }
+
+      const definition = JSON.parse(record.definition)
+
       let modified: number = 0
       let builder = ctx.db.updateTable('feed')
 
       if ('displayName' in payload && payload.displayName) {
         modified++
+
+        definition.displayName = payload.displayName.trim()
         builder = builder.set({
-          displayName: payload.displayName.trim(),
+          displayName: definition.displayName,
+          definition: JSON.stringify(definition),
         })
       }
 
       if ('description' in payload && payload.description) {
         modified++
+
+        definition.description = payload.description.trim()
         builder = builder.set({
-          description: payload.description.trim(),
+          description: definition.description,
+          definition: JSON.stringify(definition),
         })
       }
 
       if ('avatar' in payload && payload.avatar) {
         modified++
+
+        definition.avatar = payload.avatar.trim()
         builder = builder.set({
-          avatar: payload.avatar.trim(),
+          avatar: definition.avatar,
+          definition: JSON.stringify(definition),
         })
       }
 
       if ('type' in payload) {
         modified++
+
+        definition.type = payload.type ?? ''
         builder = builder.set({
-          type: payload.type ?? '',
+          type: definition.type,
+          definition: JSON.stringify(definition),
         })
       }
 
@@ -78,22 +107,67 @@ const makeRouter = (ctx: AppContext) => {
         }
 
         modified++
+
+        definition.state = payload.state
         builder = builder.set({
-          state: payload.state,
+          state: definition.state,
+          definition: JSON.stringify(definition),
         })
       }
 
       if ('pinned' in payload) {
         modified++
+
+        definition.pinned = payload.pinned ? 1 : 0
         builder = builder.set({
-          pinned: payload.pinned ? 1 : 0,
+          pinned: definition.pinned,
+          definition: JSON.stringify(definition),
         })
       }
 
       if ('favorite' in payload) {
         modified++
+
+        definition.favorite = payload.favorite ? 1 : 0
         builder = builder.set({
-          favorite: payload.favorite ? 1 : 0,
+          favorite: definition.favorite,
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('users' in payload) {
+        modified++
+
+        definition.users = payload.users
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('hashtags' in payload) {
+        modified++
+
+        definition.hashtags = payload.hashtags
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('mentions' in payload) {
+        modified++
+
+        definition.mentions = payload.mentions
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('search' in payload) {
+        modified++
+
+        definition.search = payload.search
+        builder = builder.set({
+          definition: JSON.stringify(definition),
         })
       }
 
@@ -165,7 +239,6 @@ const makeRouter = (ctx: AppContext) => {
         .select('createdAt')
         .where('did', '=', req['bsky'].did)
         .where('identifier', '=', identifier)
-        .orderBy('createdAt', 'desc')
         .executeTakeFirst()
 
       if (!result) {
