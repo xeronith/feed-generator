@@ -4,7 +4,7 @@ import { AppContext } from '../config'
 import algos from '../algos'
 import { validateAuth } from '../auth'
 import { AtUri } from '@atproto/syntax'
-import * as dynamic from '../algos/dynamic'
+import * as dynamic from '../algos/dynamic/handler'
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.feed.getFeedSkeleton(async ({ params, req }) => {
