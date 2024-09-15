@@ -64,6 +64,8 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       query += ` AND \`indexedAt\` < '${timeStr}'`
     }
 
+    const parameters: any[] = []
+
     if (
       authors.length === 0 &&
       hashtags.length === 0 &&
@@ -73,20 +75,24 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       query += ` AND \`author\` = 'UNKNOWN'`
     } else {
       if (authors.length > 0) {
-        const authorList = authors.map((author) => `'${author}'`).join(', ')
+        authors.forEach((author) => parameters.push(author))
+        const authorList = authors.map(() => '?').join(', ')
         query += ` AND \`author\` IN (${authorList})`
       }
 
       hashtags.forEach((hashtag) => {
-        query += ` AND SEARCH(\`text\`, '${hashtag.replace('-', ' ')}')`
+        parameters.push(hashtag.replace('-', ' '))
+        query += ` AND SEARCH(\`text\`, ?)`
       })
 
       mentions.forEach((mention) => {
-        query += ` AND SEARCH(\`text\`, '${mention.replace('-', ' ')}')`
+        parameters.push(mention.replace('-', ' '))
+        query += ` AND SEARCH(\`text\`, ?)`
       })
 
       search.forEach((criteria) => {
-        query += ` AND SEARCH(\`text\`, '${criteria.replace('-', ' ')}')`
+        parameters.push(criteria.replace('-', ' '))
+        query += ` AND SEARCH(\`text\`, ?)`
       })
     }
 
@@ -97,6 +103,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       keyFilename: path.resolve(__dirname, '..', ctx.cfg.bigQueryKeyFile),
     }).query({
       query: query,
+      params: parameters,
     })
 
     const feed = res.map((row) => ({
