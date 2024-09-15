@@ -88,6 +88,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
         }
 
         const parameters: any[] = []
+        let comment = query
 
         if (
           authors.length === 0 &&
@@ -96,30 +97,43 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
           search.length === 0
         ) {
           query += ` AND \`author\` = 'UNKNOWN'`
+          comment = query
         } else {
           if (authors.length > 0) {
             authors.forEach((author) => parameters.push(author))
             const authorList = authors.map(() => '?').join(', ')
+            const authorListRaw = authors
+              .map((author) => `'${author}'`)
+              .join(', ')
+
             query += ` AND \`author\` IN (${authorList})`
+            comment += ` AND \`author\` IN (${authorListRaw})`
           }
 
           hashtags.forEach((hashtag) => {
             parameters.push(hashtag.replace('-', ' '))
             query += ` AND SEARCH(\`text\`, ?)`
+            comment += ` AND SEARCH(\`text\`, '${hashtag.replace('-', ' ')}')`
           })
 
           mentions.forEach((mention) => {
             parameters.push(mention.replace('-', ' '))
             query += ` AND SEARCH(\`text\`, ?)`
+            comment += ` AND SEARCH(\`text\`, '${mention.replace('-', ' ')}')`
           })
 
           search.forEach((criteria) => {
             parameters.push(criteria.replace('-', ' '))
             query += ` AND SEARCH(\`text\`, ?)`
+            comment += ` AND SEARCH(\`text\`, '${criteria.replace('-', ' ')}')`
           })
         }
 
-        query += ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC;`
+        const ordering = ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC;`
+        query += ordering
+        comment += ordering
+
+        query = `# IDENTIFIER: ${identifier}\n\n# ${comment}\n\n${query}`
 
         const [queryResult] = await new BigQuery({
           projectId: ctx.cfg.bigQueryProjectId,
