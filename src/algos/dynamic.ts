@@ -78,15 +78,15 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       }
 
       hashtags.forEach((hashtag) => {
-        query += ` AND SEARCH(\`text\`, '${hashtag}')`
+        query += ` AND SEARCH(\`text\`, '${hashtag.replace('-', ' ')}')`
       })
 
       mentions.forEach((mention) => {
-        query += ` AND SEARCH(\`text\`, '${mention}')`
+        query += ` AND SEARCH(\`text\`, '${mention.replace('-', ' ')}')`
       })
 
       search.forEach((criteria) => {
-        query += ` AND SEARCH(\`text\`, '${criteria}')`
+        query += ` AND SEARCH(\`text\`, '${criteria.replace('-', ' ')}')`
       })
     }
 
