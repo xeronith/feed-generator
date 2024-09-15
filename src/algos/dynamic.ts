@@ -55,7 +55,14 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
   }
 
   if (ctx.cfg.bigQueryEnabled) {
-    let query = `SELECT * FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE `
+    let query = `SELECT \`uri\` FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE`
+
+    query += ' `indexedAt` > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)'
+
+    if (params.cursor) {
+      const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+      query += ` AND \`indexedAt\` < '${timeStr}'`
+    }
 
     if (
       authors.length === 0 &&
@@ -63,37 +70,27 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
       mentions.length === 0 &&
       search.length === 0
     ) {
-      query += `\`author\` = 'unknown'`
+      query += ` AND \`author\` = 'UNKNOWN'`
     } else {
-      const conditions: string[] = []
       if (authors.length > 0) {
         const authorList = authors.map((author) => `'${author}'`).join(', ')
-        conditions.push(`\`author\` IN (${authorList})`)
+        query += ` AND \`author\` IN (${authorList})`
       }
 
       hashtags.forEach((hashtag) => {
-        conditions.push(`\`text\` LIKE '%${hashtag}%'`)
+        query += ` AND SEARCH(\`text\`, '${hashtag}')`
       })
 
       mentions.forEach((mention) => {
-        conditions.push(`\`text\` LIKE '%${mention}%'`)
+        query += ` AND SEARCH(\`text\`, '${mention}')`
       })
 
       search.forEach((criteria) => {
-        conditions.push(`\`text\` LIKE '%${criteria}%'`)
+        query += ` AND SEARCH(\`text\`, '${criteria}')`
       })
-
-      if (conditions.length > 0) {
-        query += conditions.join(' AND ')
-      }
     }
 
-    if (params.cursor) {
-      const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-      query += ` AND \`indexedAt\` < '${timeStr}'`
-    }
-
-    query += ` ORDER BY \`indexedAt\` DESC, \`cid\` DESC LIMIT ${params.limit};`
+    query += ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC LIMIT ${params.limit};`
 
     const [res] = await new BigQuery({
       projectId: ctx.cfg.bigQueryProjectId,
