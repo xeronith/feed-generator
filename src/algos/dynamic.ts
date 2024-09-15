@@ -144,7 +144,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     let result: any[] = JSON.parse(cache ? cache.content : '[]')
     if (params.cursor) {
       const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-      result = result.filter((row) => new row.indexedAt() < timeStr)
+      result = result.filter((row) => row.indexedAt < timeStr)
     }
 
     result = result.slice(0, params.limit)
