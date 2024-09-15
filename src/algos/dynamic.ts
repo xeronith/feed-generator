@@ -55,63 +55,106 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
   }
 
   if (ctx.cfg.bigQueryEnabled) {
-    let query = `SELECT \`uri\`, \`indexedAt\` FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE`
+    const cacheTimeout = new Date(
+      new Date().getTime() - ctx.cfg.cacheTimeout,
+    ).toISOString()
 
-    query += ' `indexedAt` > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)'
+    let cache = await ctx.db
+      .selectFrom('cache')
+      .selectAll()
+      .where('identifier', '=', identifier)
+      .where('refreshedAt', '>', cacheTimeout)
+      .executeTakeFirst()
 
-    if (params.cursor) {
-      const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-      query += ` AND \`indexedAt\` < '${timeStr}'`
-    }
+    if (!cache) {
+      let query = `SELECT \`uri\`, \`indexedAt\` FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE`
 
-    const parameters: any[] = []
+      query +=
+        ' `indexedAt` > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)'
 
-    if (
-      authors.length === 0 &&
-      hashtags.length === 0 &&
-      mentions.length === 0 &&
-      search.length === 0
-    ) {
-      query += ` AND \`author\` = 'UNKNOWN'`
-    } else {
-      if (authors.length > 0) {
-        authors.forEach((author) => parameters.push(author))
-        const authorList = authors.map(() => '?').join(', ')
-        query += ` AND \`author\` IN (${authorList})`
+      if (params.cursor) {
+        const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+        query += ` AND \`indexedAt\` < '${timeStr}'`
       }
 
-      hashtags.forEach((hashtag) => {
-        parameters.push(hashtag.replace('-', ' '))
-        query += ` AND SEARCH(\`text\`, ?)`
+      const parameters: any[] = []
+
+      if (
+        authors.length === 0 &&
+        hashtags.length === 0 &&
+        mentions.length === 0 &&
+        search.length === 0
+      ) {
+        query += ` AND \`author\` = 'UNKNOWN'`
+      } else {
+        if (authors.length > 0) {
+          authors.forEach((author) => parameters.push(author))
+          const authorList = authors.map(() => '?').join(', ')
+          query += ` AND \`author\` IN (${authorList})`
+        }
+
+        hashtags.forEach((hashtag) => {
+          parameters.push(hashtag.replace('-', ' '))
+          query += ` AND SEARCH(\`text\`, ?)`
+        })
+
+        mentions.forEach((mention) => {
+          parameters.push(mention.replace('-', ' '))
+          query += ` AND SEARCH(\`text\`, ?)`
+        })
+
+        search.forEach((criteria) => {
+          parameters.push(criteria.replace('-', ' '))
+          query += ` AND SEARCH(\`text\`, ?)`
+        })
+      }
+
+      query += ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC;`
+
+      const [res] = await new BigQuery({
+        projectId: ctx.cfg.bigQueryProjectId,
+        keyFilename: path.resolve(__dirname, '..', ctx.cfg.bigQueryKeyFile),
+      }).query({
+        query: query,
+        params: parameters,
       })
 
-      mentions.forEach((mention) => {
-        parameters.push(mention.replace('-', ' '))
-        query += ` AND SEARCH(\`text\`, ?)`
-      })
+      ctx.db
+        .insertInto('cache')
+        .values({
+          identifier: identifier,
+          content: JSON.stringify(res),
+          refreshedAt: new Date().toISOString(),
+        })
+        .onConflict((e) =>
+          e.doUpdateSet({
+            content: JSON.stringify(res),
+            refreshedAt: new Date().toISOString(),
+          }),
+        )
+        .execute()
 
-      search.forEach((criteria) => {
-        parameters.push(criteria.replace('-', ' '))
-        query += ` AND SEARCH(\`text\`, ?)`
-      })
+      cache = await ctx.db
+        .selectFrom('cache')
+        .selectAll()
+        .where('identifier', '=', identifier)
+        .executeTakeFirst()
     }
 
-    query += ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC LIMIT ${params.limit};`
+    let result: any[] = JSON.parse(cache ? cache.content : '[]')
+    if (params.cursor) {
+      const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+      result = result.filter((row) => new row.indexedAt() < timeStr)
+    }
 
-    const [res] = await new BigQuery({
-      projectId: ctx.cfg.bigQueryProjectId,
-      keyFilename: path.resolve(__dirname, '..', ctx.cfg.bigQueryKeyFile),
-    }).query({
-      query: query,
-      params: parameters,
-    })
+    result = result.slice(0, params.limit)
 
-    const feed = res.map((row) => ({
+    const feed = result.map((row) => ({
       post: row.uri,
     }))
 
     let cursor: string | undefined
-    const last = res.at(-1)
+    const last = result.at(-1)
     if (last) {
       cursor = new Date(last.indexedAt.value).getTime().toString(10)
     }

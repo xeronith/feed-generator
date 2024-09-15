@@ -2,6 +2,7 @@ export type DatabaseSchema = {
   post: Post
   sub_state: SubState
   feed: Feed
+  cache: Cache
 }
 
 export type Post = {
@@ -31,4 +32,10 @@ export type Feed = {
   state: string
   createdAt: string
   updatedAt: string
+}
+
+export type Cache = {
+  identifier: string
+  content: string
+  refreshedAt: string
 }

@@ -13,6 +13,7 @@ export type Config = {
   listenhost: string
   hostname: string
   sqliteLocation: string
+  cacheTimeout: number
   firehoseEnabled: boolean
   subscriptionEndpoint: string
   serviceDid: string

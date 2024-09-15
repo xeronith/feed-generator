@@ -46,3 +46,17 @@ migrations['001'] = {
     await db.schema.dropTable('feed').execute()
   },
 }
+
+migrations['002'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('cache')
+      .addColumn('identifier', 'varchar(15)', (col) => col.primaryKey())
+      .addColumn('content', 'text', (col) => col.notNull())
+      .addColumn('refreshedAt', 'varchar', (col) => col.notNull())
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('cache').execute()
+  },
+}

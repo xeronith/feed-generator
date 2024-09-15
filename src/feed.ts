@@ -57,6 +57,7 @@ const makeRouter = (ctx: AppContext) => {
       const definition = JSON.parse(record.definition)
 
       let modified: number = 0
+      let cacheInvalidated = false
       let builder = ctx.db.updateTable('feed')
 
       if ('displayName' in payload && payload.displayName) {
@@ -137,6 +138,7 @@ const makeRouter = (ctx: AppContext) => {
 
       if ('users' in payload) {
         modified++
+        cacheInvalidated = true
 
         definition.users = payload.users
         builder = builder.set({
@@ -146,6 +148,7 @@ const makeRouter = (ctx: AppContext) => {
 
       if ('hashtags' in payload) {
         modified++
+        cacheInvalidated = true
 
         definition.hashtags = payload.hashtags
         builder = builder.set({
@@ -155,6 +158,7 @@ const makeRouter = (ctx: AppContext) => {
 
       if ('mentions' in payload) {
         modified++
+        cacheInvalidated = true
 
         definition.mentions = payload.mentions
         builder = builder.set({
@@ -164,6 +168,7 @@ const makeRouter = (ctx: AppContext) => {
 
       if ('search' in payload) {
         modified++
+        cacheInvalidated = true
 
         definition.search = payload.search
         builder = builder.set({
@@ -182,6 +187,13 @@ const makeRouter = (ctx: AppContext) => {
         .where('did', '=', req['bsky'].did)
 
       await builder.execute()
+
+      if (cacheInvalidated) {
+        await ctx.db
+          .deleteFrom('cache')
+          .where('identifier', '=', identifier)
+          .execute()
+      }
     } catch (error) {
       return res.status(500).json({
         error: 'failed',
@@ -201,6 +213,11 @@ const makeRouter = (ctx: AppContext) => {
     const identifier = req.params.identifier
 
     try {
+      await ctx.db
+        .deleteFrom('cache')
+        .where('identifier', '=', identifier)
+        .execute()
+
       await ctx.db
         .deleteFrom('feed')
         .where('identifier', '=', identifier)

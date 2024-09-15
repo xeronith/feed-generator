@@ -18,6 +18,8 @@ const run = async () => {
       maybeStr(process.env.FEEDGEN_PUBLISHER_DID) ?? 'did:example:alice',
     subscriptionReconnectDelay:
       maybeInt(process.env.FEEDGEN_SUBSCRIPTION_RECONNECT_DELAY) ?? 3000,
+    cacheTimeout:
+      maybeInt(process.env.FEEDGEN_CACHE_TIMEOUT) ?? 24 * 60 * 60 * 1000,
     hostname,
     serviceDid,
     bigQueryEnabled: process.env.BIGQUERY_KEY_FILE ? true : false,
@@ -26,7 +28,7 @@ const run = async () => {
     bigQueryDatasetId: maybeStr(process.env.BIGQUERY_DATASET_ID) ?? '',
     bigQueryTableId: maybeStr(process.env.BIGQUERY_TABLE_ID) ?? '',
   }
-  
+
   const server = FeedGenerator.create(cfg)
   await server.start()
   console.log(
