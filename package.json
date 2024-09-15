@@ -29,6 +29,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "kysely": "^0.22.0",
+    "lz-string": "^1.5.0",
     "multiformats": "^9.9.0"
   },
   "devDependencies": {
