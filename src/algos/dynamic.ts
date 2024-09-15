@@ -55,7 +55,7 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
   }
 
   if (ctx.cfg.bigQueryEnabled) {
-    let query = `SELECT \`uri\` FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE`
+    let query = `SELECT \`uri\`, \`indexedAt\` FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE`
 
     query += ' `indexedAt` > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)'
 
