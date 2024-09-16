@@ -27,4 +27,5 @@ export type Config = {
   bigQueryDatasetId: string
   bigQueryTableId: string
   bigQueryRealtimeTableId: string
+  bigQueryRealtimeEnabled: boolean
 }
