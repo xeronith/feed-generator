@@ -30,9 +30,7 @@ export const BigQueryExecutor = async (
 
     if (!cache) {
       let query = `SELECT \`uri\`, \`indexedAt\` FROM \`${ctx.cfg.bigQueryDatasetId}.${ctx.cfg.bigQueryTableId}\` WHERE`
-
-      query +=
-        ' `indexedAt` > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)'
+      query += ` \`indexedAt\` > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${ctx.cfg.maxInterval} DAY)`
 
       if (params.cursor) {
         const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()

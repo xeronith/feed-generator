@@ -20,6 +20,7 @@ const run = async () => {
       maybeInt(process.env.FEEDGEN_SUBSCRIPTION_RECONNECT_DELAY) ?? 3000,
     cacheTimeout:
       maybeInt(process.env.FEEDGEN_CACHE_TIMEOUT) ?? 24 * 60 * 60 * 1000,
+    maxInterval: maybeInt(process.env.FEEDGEN_MAX_INTERVAL) ?? 7,
     hostname,
     serviceDid,
     bigQueryEnabled: process.env.BIGQUERY_KEY_FILE ? true : false,
