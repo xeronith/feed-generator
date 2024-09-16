@@ -11,6 +11,7 @@ export type AppContext = {
 export type Config = {
   port: number
   listenhost: string
+  protocol: string
   hostname: string
   sqliteLocation: string
   cacheTimeout: number
