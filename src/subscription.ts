@@ -62,9 +62,12 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     if (postsToCreate.length > 0) {
       if (this.cfg.bigQueryEnabled) {
         buffer = buffer.concat(postsToCreate)
-        const realtimeBuffer = buffer.map((e) => {
-          e.uri, e.author, e.text, e.indexedAt
-        })
+        const realtimeBuffer = buffer.map((e) => ({
+          uri: e.uri,
+          author: e.author,
+          text: e.text,
+          indexedAt: e.indexedAt,
+        }))
 
         if (buffer.length >= 2500) {
           this.bigquery
