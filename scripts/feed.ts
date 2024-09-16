@@ -120,6 +120,13 @@ const run = async () => {
     const getFeedResponse = await axios.get(`${feedEndpoint}?state=published`)
     console.log(getFeedResponse.data)
   }
+
+  // get feed content
+  {
+    const getFeedResponse = await axios.get(`${feedEndpoint}/${feedIdentifier}`)
+    const getFeedContentResponse = await axios.get(getFeedResponse.data.url)
+    console.log(getFeedContentResponse.data)
+  }
 }
 
 run()
