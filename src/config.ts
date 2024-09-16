@@ -26,4 +26,5 @@ export type Config = {
   bigQueryProjectId: string
   bigQueryDatasetId: string
   bigQueryTableId: string
+  bigQueryRealtimeTableId: string
 }

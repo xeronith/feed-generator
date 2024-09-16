@@ -29,6 +29,7 @@ const run = async () => {
     bigQueryProjectId: maybeStr(process.env.BIGQUERY_PROJECT_ID) ?? '',
     bigQueryDatasetId: maybeStr(process.env.BIGQUERY_DATASET_ID) ?? '',
     bigQueryTableId: maybeStr(process.env.BIGQUERY_TABLE_ID) ?? '',
+    bigQueryRealtimeTableId: maybeStr(process.env.BIGQUERY_REALTIME_TABLE_ID) ?? '',
   }
 
   const server = FeedGenerator.create(cfg)

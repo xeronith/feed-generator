@@ -80,7 +80,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
           this.bigquery
             .dataset(this.cfg.bigQueryDatasetId)
-            .table(`${this.cfg.bigQueryTableId}Realtime`)
+            .table(`${this.cfg.bigQueryRealtimeTableId}`)
             .insert(realtimeBuffer)
             .catch((err) => {
               console.error(
