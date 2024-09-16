@@ -25,22 +25,26 @@ export const validateAuth = async (
 }
 
 const agent = new AtpAgent({ service: 'https://bsky.social' })
-const tokenCache: Record<string, { did: string; expiry: number }> = {}
+const tokenCache: Record<
+  string,
+  { did: string; handle: string; email: string; expiry: number }
+> = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
+
+const excludedRoutes = ['/xrpc/app.bsky.feed.getFeedSkeleton']
 
 export async function AuthMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  const excludedRoutes = ['/xrpc/app.bsky.feed.getFeedSkeleton']
-  if (excludedRoutes.includes(req.path)) {
-    return next()
-  }
-
   const authHeader = req.headers['authorization']
 
   if (!authHeader) {
+    if (excludedRoutes.includes(req.path)) {
+      return next()
+    }
+
     return res.status(401).json({
       error: 'authorization header missing',
     })
@@ -57,6 +61,8 @@ export async function AuthMiddleware(
   if (tokenCache[token] && tokenCache[token].expiry > Date.now()) {
     req['bsky'] = {
       did: tokenCache[token].did,
+      handle: tokenCache[token].handle,
+      email: tokenCache[token].email,
     }
 
     return next()
@@ -74,11 +80,15 @@ export async function AuthMiddleware(
 
       tokenCache[token] = {
         did: result.data.did,
+        handle: result.data.handle,
+        email: result.data.email ?? 'n/a',
         expiry: Date.now() + CACHE_EXPIRY_MS,
       }
 
       req['bsky'] = {
         did: tokenCache[token].did,
+        handle: tokenCache[token].handle,
+        email: tokenCache[token].email,
       }
 
       return next()
