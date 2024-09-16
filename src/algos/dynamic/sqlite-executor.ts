@@ -1,10 +1,12 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
 import { Definition } from './types'
+import { Identity } from '..'
 
 export const SQLiteExecutor = async (
   ctx: AppContext,
   params: QueryParams,
+  identity: Identity,
   identifier: string,
   definition: Definition,
   authors: string[],

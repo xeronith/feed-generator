@@ -5,7 +5,13 @@ import {
 } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import * as dynamic from './dynamic/handler'
 
-type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>
+export interface Identity {
+  did: string
+  handle: string
+  email: string
+}
+
+type AlgoHandler = (ctx: AppContext, params: QueryParams, identity: Identity) => Promise<AlgoOutput>
 
 const algos: Record<string, AlgoHandler> = {
   [dynamic.shortname]: dynamic.handler,

@@ -36,7 +36,11 @@ export default function (server: Server, ctx: AppContext) {
      * )
      */
 
-    const body = await algo(ctx, params)
+    const body = await algo(
+      ctx,
+      params,
+      req['bsky'] ?? { did: 'anonymous', handle: 'n/a', email: '' },
+    )
     return {
       encoding: 'application/json',
       body: body,

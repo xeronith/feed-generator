@@ -1,6 +1,7 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { BigQuery } from '@google-cloud/bigquery'
 import { AppContext } from '../../config'
+import { Identity } from '..'
 import { Definition } from './types'
 import { InProcCache } from './inproc-cache'
 import * as LZString from 'lz-string'
@@ -9,6 +10,7 @@ import path from 'path'
 export const BigQueryExecutor = async (
   ctx: AppContext,
   params: QueryParams,
+  identity: Identity,
   identifier: string,
   definition: Definition,
   authors: string[],
@@ -77,7 +79,7 @@ export const BigQueryExecutor = async (
       query += ordering
       comment += ordering
 
-      query = `# IDENTIFIER: ${identifier}\n\n# ${comment}\n\n${query}`
+      query = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${comment}\n\n${query}`
 
       const [queryResult] = await new BigQuery({
         projectId: ctx.cfg.bigQueryProjectId,

@@ -1,5 +1,6 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
+import { Identity } from '..'
 
 export const Nothing = { feed: [] }
 
@@ -13,6 +14,7 @@ export interface Definition {
 export type Executor = (
   ctx: AppContext,
   params: QueryParams,
+  identity: Identity,
   identifier: string,
   definition: Definition,
   authors: string[],

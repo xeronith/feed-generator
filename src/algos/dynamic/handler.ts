@@ -3,10 +3,11 @@ import { AppContext } from '../../config'
 import { SQLiteExecutor } from './sqlite-executor'
 import { BigQueryExecutor } from './bigquery-executor'
 import { Definition, Executor, Nothing } from './types'
+import { Identity } from '..'
 
 export const shortname = 'dynamic'
 
-export const handler = async (ctx: AppContext, params: QueryParams) => {
+export const handler = async (ctx: AppContext, params: QueryParams, identity: Identity) => {
   const identifier = params[shortname]
 
   const record = await ctx.db
@@ -54,5 +55,5 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     executor = BigQueryExecutor
   }
 
-  return executor(ctx, params, identifier, definition, authors)
+  return executor(ctx, params, identity, identifier, definition, authors)
 }
