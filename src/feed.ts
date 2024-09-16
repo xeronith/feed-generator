@@ -1,5 +1,6 @@
 import express from 'express'
 import { AppContext } from './config'
+import { InProcCache } from './algos/dynamic/inproc-cache'
 
 interface RegisterRequestBody {
   identifier: string
@@ -193,6 +194,8 @@ const makeRouter = (ctx: AppContext) => {
           .deleteFrom('cache')
           .where('identifier', '=', identifier)
           .execute()
+
+        delete InProcCache[identifier]
       }
     } catch (error) {
       return res.status(500).json({
@@ -217,6 +220,8 @@ const makeRouter = (ctx: AppContext) => {
         .deleteFrom('cache')
         .where('identifier', '=', identifier)
         .execute()
+
+      delete InProcCache[identifier]
 
       await ctx.db
         .deleteFrom('feed')
