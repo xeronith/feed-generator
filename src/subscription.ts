@@ -62,6 +62,10 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     if (postsToCreate.length > 0) {
       if (this.cfg.bigQueryEnabled) {
         buffer = buffer.concat(postsToCreate)
+        const realtimeBuffer = buffer.map((e) => {
+          e.uri, e.author, e.text, e.indexedAt
+        })
+
         if (buffer.length >= 2500) {
           this.bigquery
             .dataset(this.cfg.bigQueryDatasetId)
@@ -69,12 +73,23 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
             .insert(buffer)
             .catch((err) => {
               console.error(
-                'repo subscription could not flush',
+                'repo subscription could not flush buffer',
                 JSON.stringify(err, null, 4),
               )
             })
 
-          console.log('flush successful')
+          this.bigquery
+            .dataset(this.cfg.bigQueryDatasetId)
+            .table(`${this.cfg.bigQueryTableId}Realtime`)
+            .insert(realtimeBuffer)
+            .catch((err) => {
+              console.error(
+                'repo subscription could not flush realtime buffer',
+                JSON.stringify(err, null, 4),
+              )
+            })
+
+          console.log('repo subscription flush attempted')
           buffer.length = 0
         }
       } else {
