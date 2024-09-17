@@ -52,22 +52,7 @@ export const BigQueryExecutor = async (
         params: queryBuilder.parameters,
       })
 
-      const cacheItem = {
-        identifier: identifier,
-        content: LZString.compressToUTF16(JSON.stringify(queryResult ?? [])),
-        refreshedAt: new Date().toISOString(),
-      }
-
-      ctx.db
-        .insertInto('cache')
-        .values(cacheItem)
-        .onConflict((e) =>
-          e.doUpdateSet({
-            content: cacheItem.content,
-            refreshedAt: cacheItem.refreshedAt,
-          }),
-        )
-        .execute()
+      refreshCache(ctx, identifier, queryResult)
 
       cache = await ctx.db
         .selectFrom('cache')
@@ -105,6 +90,13 @@ export const BigQueryExecutor = async (
     })
 
     result = realtimeQueryResult.concat(result)
+
+    const refreshedAt = refreshCache(ctx, identifier, result)
+
+    InProcCache[identifier] = {
+      content: result,
+      refreshedAt: refreshedAt,
+    }
   }
 
   if (params.cursor) {
@@ -128,6 +120,29 @@ export const BigQueryExecutor = async (
     cursor,
     feed,
   }
+}
+
+const refreshCache = (ctx: AppContext, identifier: string, result: any[]) => {
+  const refreshedAt = new Date().toISOString()
+
+  const cacheItem = {
+    identifier: identifier,
+    content: LZString.compressToUTF16(JSON.stringify(result ?? [])),
+    refreshedAt: refreshedAt,
+  }
+
+  ctx.db
+    .insertInto('cache')
+    .values(cacheItem)
+    .onConflict((e) =>
+      e.doUpdateSet({
+        content: cacheItem.content,
+        refreshedAt: cacheItem.refreshedAt,
+      }),
+    )
+    .execute()
+
+  return refreshedAt
 }
 
 const buildQuery = (
