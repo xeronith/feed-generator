@@ -24,6 +24,7 @@
     "@atproto/syntax": "^0.1.2",
     "@atproto/xrpc-server": "^0.6.0",
     "@google-cloud/bigquery": "^7.9.0",
+    "@slack/webhook": "^7.0.3",
     "axios": "^1.7.7",
     "better-sqlite3": "^8.3.0",
     "cors": "^2.8.5",
