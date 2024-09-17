@@ -81,16 +81,18 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
               )
             })
 
-          this.bigquery
-            .dataset(this.cfg.bigQueryDatasetId)
-            .table(`${this.cfg.bigQueryRealtimeTableId}`)
-            .insert(realtimeBuffer)
-            .catch((err) => {
-              console.error(
-                'repo subscription could not flush realtime buffer',
-                JSON.stringify(err, null, 4),
-              )
-            })
+          if (this.cfg.bigQueryRealtimeEnabled) {
+            this.bigquery
+              .dataset(this.cfg.bigQueryDatasetId)
+              .table(`${this.cfg.bigQueryRealtimeTableId}`)
+              .insert(realtimeBuffer)
+              .catch((err) => {
+                console.error(
+                  'repo subscription could not flush realtime buffer',
+                  JSON.stringify(err, null, 4),
+                )
+              })
+          }
 
           console.log('repo subscription flush attempted')
           buffer.length = 0
