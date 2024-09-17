@@ -6,6 +6,7 @@ import { createServer } from './lexicon'
 import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import { createDb, Database, migrateToLatest } from './db'
+import { createCacheDb } from './db/cache'
 import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
@@ -37,7 +38,13 @@ export class FeedGenerator {
     app.use(cors())
     app.use(AuthMiddleware)
     const db = createDb(cfg.sqliteLocation)
-    const firehose = new FirehoseSubscription(db, cfg, cfg.subscriptionEndpoint)
+    const cacheDb = createCacheDb(cfg.sqliteLocation)
+    const firehose = new FirehoseSubscription(
+      db,
+      cacheDb,
+      cfg,
+      cfg.subscriptionEndpoint,
+    )
 
     const didCache = new MemoryCache()
     const handleResolver = new HandleResolver()
@@ -56,6 +63,7 @@ export class FeedGenerator {
     })
     const ctx: AppContext = {
       db,
+      cacheDb,
       handleResolver,
       didResolver,
       cfg,
