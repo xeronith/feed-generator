@@ -267,8 +267,22 @@ const makeRouter = (ctx: AppContext) => {
         return res.sendStatus(404)
       }
 
+      const definition = JSON.parse(result.definition)
+
       res.status(200).json({
-        ...result,
+        identifier: result.identifier,
+        displayName: result.displayName,
+        description: result.description,
+        avatar: result.avatar,
+        users: definition.users ?? [],
+        hashtags: definition.hashtags ?? [],
+        mentions: definition.mentions ?? [],
+        search: definition.search ?? [],
+        pinned: result.pinned,
+        favorite: result.favorite,
+        type: result.type,
+        state: result.state,
+        createdAt: result.createdAt,
         url: `${ctx.cfg.protocol}://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${result.identifier}&limit=100`,
       })
     } catch (error) {
@@ -308,10 +322,26 @@ const makeRouter = (ctx: AppContext) => {
         .execute()
 
       res.status(200).json(
-        result.map((feed) => ({
-          ...feed,
-          url: `${ctx.cfg.protocol}://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}&limit=100`,
-        })),
+        result.map((feed) => {
+          const definition = JSON.parse(feed.definition)
+
+          return {
+            identifier: feed.identifier,
+            displayName: feed.displayName,
+            description: feed.description,
+            avatar: feed.avatar,
+            users: definition.users ?? [],
+            hashtags: definition.hashtags ?? [],
+            mentions: definition.mentions ?? [],
+            search: definition.search ?? [],
+            pinned: feed.pinned,
+            favorite: feed.favorite,
+            type: feed.type,
+            state: feed.state,
+            createdAt: feed.createdAt,
+            url: `${ctx.cfg.protocol}://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}&limit=100`,
+          }
+        }),
       )
     } catch (error) {
       return res.status(500).json({
