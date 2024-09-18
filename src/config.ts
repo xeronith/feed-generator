@@ -20,6 +20,7 @@ export type Config = {
   maxInterval: number
   firehoseEnabled: boolean
   localFirehose: boolean
+  localRealtimeEnabled: boolean
   subscriptionEndpoint: string
   serviceDid: string
   publisherDid: string

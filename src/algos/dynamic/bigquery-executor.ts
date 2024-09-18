@@ -70,7 +70,7 @@ export const BigQueryExecutor = async (
 
   let result: any[] = InProcCache[identifier].content
 
-  if (ctx.cfg.localFirehose) {
+  if (ctx.cfg.localRealtimeEnabled && ctx.cfg.localFirehose) {
     const realtimeQueryBuilder = buildLocalQuery(
       `'${InProcCache[identifier].refreshedAt}'`,
       params,
