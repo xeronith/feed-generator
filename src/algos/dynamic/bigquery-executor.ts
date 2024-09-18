@@ -70,7 +70,27 @@ export const BigQueryExecutor = async (
 
   let result: any[] = InProcCache[identifier].content
 
-  if (ctx.cfg.bigQueryRealtimeEnabled) {
+  if (ctx.cfg.localFirehose) {
+    const realtimeQueryBuilder = buildLocalQuery(
+      `'${InProcCache[identifier].refreshedAt}'`,
+      params,
+      identity,
+      identifier,
+      definition,
+    )
+
+    const stmt = ctx.cacheDb.prepare(realtimeQueryBuilder.query)
+    const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
+
+    result = realtimeQueryResult.concat(result)
+
+    const refreshedAt = refreshCache(ctx, identifier, result)
+
+    InProcCache[identifier] = {
+      content: result,
+      refreshedAt: refreshedAt,
+    }
+  } else if (ctx.cfg.bigQueryRealtimeEnabled) {
     const realtimeQueryBuilder = buildQuery(
       ctx.cfg.bigQueryDatasetId,
       ctx.cfg.bigQueryRealtimeTableId,
@@ -110,7 +130,9 @@ export const BigQueryExecutor = async (
   let cursor: string | undefined
   const last = result.at(-1)
   if (last) {
-    cursor = new Date(last.indexedAt.value).getTime().toString(10)
+    cursor = new Date(last.indexedAt.value ?? last.indexedAt)
+      .getTime()
+      .toString(10)
   }
 
   return {
@@ -140,6 +162,63 @@ const refreshCache = (ctx: AppContext, identifier: string, result: any[]) => {
     .execute()
 
   return refreshedAt
+}
+
+const buildLocalQuery = (
+  interval: string,
+  params: QueryParams,
+  identity: Identity,
+  identifier: string,
+  definition: Definition,
+) => {
+  let query = `SELECT "uri", "indexedAt" FROM "post" WHERE`
+  query += ` "indexedAt" > ${interval}`
+
+  if (params.cursor) {
+    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+    query += ` AND "indexedAt" < '${timeStr}'`
+  }
+
+  const parameters: any[] = []
+
+  if (Array.isArray(definition.authors) && definition.authors.length > 0) {
+    definition.authors.forEach((author) => parameters.push(author))
+    const authorList = definition.authors.map(() => '?').join(', ')
+    const authorListRaw = definition.authors
+      .map((author) => `'${author}'`)
+      .join(', ')
+
+    query += ` AND "author" IN (${authorList})`
+  }
+
+  if (Array.isArray(definition.hashtags)) {
+    definition.hashtags.forEach((hashtag) => {
+      parameters.push(hashtag.replace('@', '').replace('#', ''))
+      query += ` AND "text" MATCH ?`
+    })
+  }
+
+  if (Array.isArray(definition.mentions)) {
+    definition.mentions.forEach((mention) => {
+      parameters.push(mention.replace('@', '').replace('#', ''))
+      query += ` AND "text" MATCH ?`
+    })
+  }
+
+  if (Array.isArray(definition.search)) {
+    definition.search.forEach((criteria) => {
+      parameters.push(criteria.replace('@', '').replace('#', ''))
+      query += ` AND "text" MATCH ?`
+    })
+  }
+
+  const ordering = ` ORDER BY "indexedAt" DESC, "uri" DESC LIMIT 10000;`
+  query += ordering
+
+  return {
+    query,
+    parameters,
+  }
 }
 
 const buildQuery = (
@@ -197,7 +276,7 @@ const buildQuery = (
     })
   }
 
-  const ordering = ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC;`
+  const ordering = ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC LIMIT 10000;`
   query += ordering
   comment += ordering
 
