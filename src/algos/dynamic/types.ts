@@ -6,6 +6,7 @@ export const Nothing = { feed: [] }
 
 export interface Definition {
   users?: string[]
+  authors?: string[]
   hashtags?: string[]
   mentions?: string[]
   search?: string[]
@@ -17,7 +18,6 @@ export type Executor = (
   identity: Identity,
   identifier: string,
   definition: Definition,
-  authors: string[],
 ) => Promise<{
   cursor?: string
   feed: { post: any }[]

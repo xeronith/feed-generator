@@ -13,7 +13,6 @@ export const BigQueryExecutor = async (
   identity: Identity,
   identifier: string,
   definition: Definition,
-  authors: string[],
 ) => {
   const bigquery = new BigQuery({
     projectId: ctx.cfg.bigQueryProjectId,
@@ -44,7 +43,6 @@ export const BigQueryExecutor = async (
         identity,
         identifier,
         definition,
-        authors,
       )
 
       const [queryResult] = await bigquery.query({
@@ -153,7 +151,6 @@ const buildQuery = (
   identity: Identity,
   identifier: string,
   definition: Definition,
-  authors: string[],
 ) => {
   let query = `SELECT \`uri\`, \`indexedAt\` FROM \`${datasetId}.${tableId}\` WHERE`
   query += ` \`indexedAt\` > ${interval}`
@@ -166,10 +163,12 @@ const buildQuery = (
   const parameters: any[] = []
   let comment = query
 
-  if (authors.length > 0) {
-    authors.forEach((author) => parameters.push(author))
-    const authorList = authors.map(() => '?').join(', ')
-    const authorListRaw = authors.map((author) => `'${author}'`).join(', ')
+  if (Array.isArray(definition.authors) && definition.authors.length > 0) {
+    definition.authors.forEach((author) => parameters.push(author))
+    const authorList = definition.authors.map(() => '?').join(', ')
+    const authorListRaw = definition.authors
+      .map((author) => `'${author}'`)
+      .join(', ')
 
     query += ` AND \`author\` IN (${authorList})`
     comment += ` AND \`author\` IN (${authorListRaw})`
@@ -177,25 +176,25 @@ const buildQuery = (
 
   if (Array.isArray(definition.hashtags)) {
     definition.hashtags.forEach((hashtag) => {
-      parameters.push(hashtag.replace('-', ' '))
+      parameters.push(hashtag)
       query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${hashtag.replace('-', ' ')}')`
+      comment += ` AND SEARCH(\`text\`, '${hashtag}')`
     })
   }
 
   if (Array.isArray(definition.mentions)) {
     definition.mentions.forEach((mention) => {
-      parameters.push(mention.replace('-', ' '))
+      parameters.push(mention)
       query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${mention.replace('-', ' ')}')`
+      comment += ` AND SEARCH(\`text\`, '${mention}')`
     })
   }
 
   if (Array.isArray(definition.search)) {
     definition.search.forEach((criteria) => {
-      parameters.push(criteria.replace('-', ' '))
+      parameters.push(criteria)
       query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${criteria.replace('-', ' ')}')`
+      comment += ` AND SEARCH(\`text\`, '${criteria}')`
     })
   }
 

@@ -9,12 +9,11 @@ export const SQLiteExecutor = async (
   identity: Identity,
   identifier: string,
   definition: Definition,
-  authors: string[],
 ) => {
   let builder = ctx.db.selectFrom('post').selectAll()
 
-  if (authors.length > 0) {
-    builder = builder.where('author', 'in', authors)
+  if (Array.isArray(definition.authors) && definition.authors.length > 0) {
+    builder = builder.where('author', 'in', definition.authors)
   }
 
   if (Array.isArray(definition.hashtags)) {

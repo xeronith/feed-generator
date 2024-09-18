@@ -7,7 +7,11 @@ import { Identity } from '..'
 
 export const shortname = 'dynamic'
 
-export const handler = async (ctx: AppContext, params: QueryParams, identity: Identity) => {
+export const handler = async (
+  ctx: AppContext,
+  params: QueryParams,
+  identity: Identity,
+) => {
   const identifier = params[shortname]
 
   const record = await ctx.db
@@ -22,16 +26,11 @@ export const handler = async (ctx: AppContext, params: QueryParams, identity: Id
 
   const definition: Definition = JSON.parse(record.definition)
 
-  if (
-    definition?.users?.length === 0 &&
-    definition?.hashtags?.length === 0 &&
-    definition?.mentions?.length === 0 &&
-    definition?.search?.length === 0
-  ) {
-    return Nothing
-  }
-
   const authors: string[] = []
+  const hashtags: string[] = []
+  const mentions: string[] = []
+  const search: string[] = []
+
   if (Array.isArray(definition.users)) {
     const promises = definition.users.map(async (user: string) => {
       const author = await ctx.handleResolver.resolve(user)
@@ -44,16 +43,49 @@ export const handler = async (ctx: AppContext, params: QueryParams, identity: Id
 
     const resolvedPromises = await Promise.all(promises)
     resolvedPromises.forEach((author) => {
-      if (author) {
-        authors.push(author)
-      }
+      if (author) authors.push(author)
     })
   }
+
+  if (Array.isArray(definition.hashtags)) {
+    definition.hashtags.forEach((hashtag) => {
+      const value = hashtag.trim().replace('-', ' ')
+      if (value) hashtags.push(value)
+    })
+  }
+
+  if (Array.isArray(definition.mentions)) {
+    definition.mentions.forEach((mention) => {
+      const value = mention.trim().replace('-', ' ')
+      if (value) mentions.push(value)
+    })
+  }
+
+  if (Array.isArray(definition.search)) {
+    definition.search.forEach((criteria) => {
+      const value = criteria.trim().replace('-', ' ')
+      if (value) search.push(value)
+    })
+  }
+
+  if (
+    authors.length === 0 &&
+    hashtags.length === 0 &&
+    mentions.length === 0 &&
+    search.length === 0
+  ) {
+    return Nothing
+  }
+
+  definition.authors = authors
+  definition.hashtags = hashtags
+  definition.mentions = mentions
+  definition.search = search
 
   let executor: Executor = SQLiteExecutor
   if (ctx.cfg.bigQueryEnabled) {
     executor = BigQueryExecutor
   }
 
-  return executor(ctx, params, identity, identifier, definition, authors)
+  return executor(ctx, params, identity, identifier, definition)
 }
