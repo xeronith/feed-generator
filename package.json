@@ -7,6 +7,7 @@
   "author": "dholms <dtholmgren@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "elastic": "ts-node scripts/elastic.ts",
     "publish": "ts-node scripts/publishFeed.ts",
     "unpublish": "ts-node scripts/unpublishFeed.ts",
     "resolve": "ts-node scripts/resolveHandle.ts",
@@ -23,6 +24,7 @@
     "@atproto/repo": "^0.3.2",
     "@atproto/syntax": "^0.1.2",
     "@atproto/xrpc-server": "^0.6.0",
+    "@elastic/elasticsearch": "^8.15.0",
     "@google-cloud/bigquery": "^7.9.0",
     "@slack/webhook": "^7.0.3",
     "axios": "^1.7.7",
