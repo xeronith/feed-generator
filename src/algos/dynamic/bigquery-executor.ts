@@ -79,7 +79,6 @@ export const BigQueryExecutor = async (
       identity,
       identifier,
       definition,
-      authors,
     )
 
     const [realtimeQueryResult] = await bigquery.query({
