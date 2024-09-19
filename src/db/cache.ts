@@ -17,7 +17,11 @@ export class CacheDatabase {
     )
 
     this.writer = new Pool(location)
-    this.reader = new Pool(location, true)
+
+    this.reader = new Pool(location, {
+      max: 100,
+      readonly: true,
+    })
 
     this.write((connection) => {
       connection.exec(`CREATE TABLE IF NOT EXISTS "config" ("limit" INTEGER);`)
@@ -75,7 +79,7 @@ export class CacheDatabase {
     )
   }
 
-  public async read(callback: (connection: PoolConnection) => void) {
+  public read(callback: (connection: PoolConnection) => void) {
     return this.query(this.reader, callback)
   }
 
