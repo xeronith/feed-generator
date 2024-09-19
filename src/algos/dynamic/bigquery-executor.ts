@@ -143,6 +143,8 @@ export const BigQueryExecutor = async (
     }
   }
 
+  console.time('-> CURSOR')
+
   if (params.cursor) {
     const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
     result = result.filter((row) => {
@@ -155,6 +157,8 @@ export const BigQueryExecutor = async (
   }
 
   result = result.slice(0, params.limit)
+
+  console.timeEnd('-> CURSOR')
 
   const feed = result.map((item) => ({
     post: item.uri,
@@ -187,6 +191,8 @@ const refreshCache = (
   identifier: string,
   result: { uri: string; indexedAt: string; createdAt: string }[],
 ) => {
+  console.time('-> REFRESH')
+
   const seen = new Set<string>()
   result = result.filter((item) => {
     if (seen.has(item.uri)) {
@@ -199,11 +205,17 @@ const refreshCache = (
 
   const refreshedAt = new Date().toISOString()
 
+  console.time('-> COMPRESS')
+
   const cacheItem = {
     identifier: identifier,
     content: LZString.compressToUTF16(JSON.stringify(result ?? [])),
     refreshedAt: refreshedAt,
   }
+
+  console.timeEnd('-> COMPRESS')
+
+  console.time('-> PUT')
 
   ctx.db
     .insertInto('cache')
@@ -215,6 +227,10 @@ const refreshCache = (
       }),
     )
     .execute()
+
+  console.timeEnd('-> PUT')
+
+  console.timeEnd('-> REFRESH')
 
   return { result, refreshedAt }
 }
