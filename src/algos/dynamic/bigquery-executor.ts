@@ -16,7 +16,7 @@ export const BigQueryExecutor = async (
   definition: Definition,
 ) => {
   console.time('-> EXEC')
-  
+
   const bigquery = new BigQuery({
     projectId: ctx.cfg.bigQueryProjectId,
     keyFilename: path.resolve(__dirname, '../..', ctx.cfg.bigQueryKeyFile),
@@ -95,7 +95,12 @@ export const BigQueryExecutor = async (
 
       const stmt = connection.prepare(realtimeQueryBuilder.query)
       const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
-      result = realtimeQueryResult.concat(result)
+
+      if (realtimeQueryResult.length < 10000) {
+        result = realtimeQueryResult.concat(result)
+      } else {
+        result = realtimeQueryResult
+      }
     })
 
     console.timeEnd('-> CACHE')
@@ -222,12 +227,7 @@ const buildLocalQuery = (
   definition: Definition,
 ) => {
   let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE`
-  query += ` "indexedAt" > ${interval}`
-
-  if (params.cursor) {
-    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-    query += ` AND "indexedAt" < '${timeStr}'`
-  }
+  query += ` "rowid" > 0`
 
   const parameters: any[] = []
   let comment = query
@@ -267,7 +267,7 @@ const buildLocalQuery = (
     })
   }
 
-  const ordering = ` ORDER BY "indexedAt" DESC, "uri" DESC LIMIT 10000;`
+  const ordering = ` ORDER BY "rowid" DESC LIMIT 10000;`
   query += ordering
   comment += ordering
 
