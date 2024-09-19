@@ -11,6 +11,7 @@ export type Post = {
   text: string
   author: string
   indexedAt: string
+  createdAt: string
   content: string
 }
 

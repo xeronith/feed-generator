@@ -49,6 +49,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           text: create.record.text,
           author: create.author,
           indexedAt: new Date().toISOString(),
+          createdAt: create.record.createdAt,
           content: JSON.stringify(create),
         }
       })
@@ -88,6 +89,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           author: e.author,
           text: e.text,
           indexedAt: e.indexedAt,
+          createdAt: e.createdAt,
         }))
 
         if (buffer.length >= 2500) {

@@ -60,3 +60,15 @@ migrations['002'] = {
     await db.schema.dropTable('cache').execute()
   },
 }
+
+migrations['003'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('post')
+      .addColumn('createdAt', 'varchar')
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('createdAt').execute()
+  },
+}
