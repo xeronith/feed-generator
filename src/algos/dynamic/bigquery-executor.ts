@@ -126,7 +126,13 @@ export const BigQueryExecutor = async (
 
   if (params.cursor) {
     const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-    result = result.filter((row) => row.indexedAt < timeStr)
+    result = result.filter((row) => {
+      if (row.createdAt) {
+        return row.createdAt < timeStr
+      }
+
+      return row.indexedAt < timeStr
+    })
   }
 
   result = result.slice(0, params.limit)
@@ -138,9 +144,15 @@ export const BigQueryExecutor = async (
   let cursor: string | undefined
   const last = result.at(-1)
   if (last) {
-    cursor = new Date(last.indexedAt.value ?? last.indexedAt)
-      .getTime()
-      .toString(10)
+    if (last.createdAt) {
+      cursor = new Date(last.createdAt.value ?? last.createdAt)
+        .getTime()
+        .toString(10)
+    } else {
+      cursor = new Date(last.indexedAt.value ?? last.indexedAt)
+        .getTime()
+        .toString(10)
+    }
   }
 
   return {
@@ -152,7 +164,7 @@ export const BigQueryExecutor = async (
 const refreshCache = (
   ctx: AppContext,
   identifier: string,
-  result: { uri: string; indexedAt: string }[],
+  result: { uri: string; indexedAt: string, createdAt: string }[],
 ) => {
   const seen = new Set<string>()
   result = result.filter((item) => {
@@ -193,7 +205,7 @@ const buildLocalQuery = (
   identifier: string,
   definition: Definition,
 ) => {
-  let query = `SELECT "uri", "indexedAt" FROM "post" WHERE`
+  let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE`
   query += ` "indexedAt" > ${interval}`
 
   if (params.cursor) {
@@ -261,7 +273,7 @@ const buildQuery = (
   identifier: string,
   definition: Definition,
 ) => {
-  let query = `SELECT \`uri\`, \`indexedAt\` FROM \`${datasetId}.${tableId}\` WHERE`
+  let query = `SELECT \`uri\`, \`indexedAt\`, \`createdAt\` FROM \`${datasetId}.${tableId}\` WHERE`
   query += ` \`indexedAt\` > ${interval}`
 
   if (params.cursor) {
