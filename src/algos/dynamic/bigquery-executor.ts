@@ -46,6 +46,8 @@ export const BigQueryExecutor = async (
         definition,
       )
 
+      console.debug(queryBuilder.comment)
+
       const [queryResult] = await bigquery.query({
         query: queryBuilder.query,
         params: queryBuilder.parameters,
@@ -81,6 +83,8 @@ export const BigQueryExecutor = async (
     )
 
     await Cache.read((connection) => {
+      console.debug(realtimeQueryBuilder.comment)
+
       const stmt = connection.prepare(realtimeQueryBuilder.query)
       const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
       result = realtimeQueryResult.concat(result)
@@ -102,6 +106,8 @@ export const BigQueryExecutor = async (
       identifier,
       definition,
     )
+
+    console.debug(realtimeQueryBuilder.comment)
 
     const [realtimeQueryResult] = await bigquery.query({
       query: realtimeQueryBuilder.query,
@@ -182,6 +188,7 @@ const buildLocalQuery = (
   }
 
   const parameters: any[] = []
+  let comment = query
 
   if (Array.isArray(definition.authors) && definition.authors.length > 0) {
     definition.authors.forEach((author) => parameters.push(author))
@@ -191,12 +198,14 @@ const buildLocalQuery = (
       .join(', ')
 
     query += ` AND "author" IN (${authorList})`
+    comment += ` AND "author" IN (${authorListRaw})`
   }
 
   if (Array.isArray(definition.hashtags)) {
     definition.hashtags.forEach((hashtag) => {
       parameters.push(hashtag.replace('@', '').replace('#', ''))
       query += ` AND "text" MATCH ?`
+      comment += ` AND "text" MATCH '${parameters.at(-1)}'`
     })
   }
 
@@ -204,6 +213,7 @@ const buildLocalQuery = (
     definition.mentions.forEach((mention) => {
       parameters.push(mention.replace('@', '').replace('#', ''))
       query += ` AND "text" MATCH ?`
+      comment += ` AND "text" MATCH '${parameters.at(-1)}'`
     })
   }
 
@@ -211,15 +221,20 @@ const buildLocalQuery = (
     definition.search.forEach((criteria) => {
       parameters.push(criteria.replace('@', '').replace('#', ''))
       query += ` AND "text" MATCH ?`
+      comment += ` AND "text" MATCH '${parameters.at(-1)}'`
     })
   }
 
   const ordering = ` ORDER BY "indexedAt" DESC, "uri" DESC LIMIT 10000;`
   query += ordering
+  comment += ordering
+
+  comment = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${comment}`
 
   return {
     query,
     parameters,
+    comment,
   }
 }
 
@@ -258,7 +273,7 @@ const buildQuery = (
     definition.hashtags.forEach((hashtag) => {
       parameters.push(hashtag)
       query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${hashtag}')`
+      comment += ` AND SEARCH(\`text\`, '${parameters.at(-1)}')`
     })
   }
 
@@ -266,7 +281,7 @@ const buildQuery = (
     definition.mentions.forEach((mention) => {
       parameters.push(mention)
       query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${mention}')`
+      comment += ` AND SEARCH(\`text\`, '${parameters.at(-1)}')`
     })
   }
 
@@ -274,7 +289,7 @@ const buildQuery = (
     definition.search.forEach((criteria) => {
       parameters.push(criteria)
       query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${criteria}')`
+      comment += ` AND SEARCH(\`text\`, '${parameters.at(-1)}')`
     })
   }
 
@@ -282,10 +297,12 @@ const buildQuery = (
   query += ordering
   comment += ordering
 
-  query = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${comment}\n\n${query}`
+  comment = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${comment}`
+  query = `${comment}\n\n${query}`
 
   return {
     query,
     parameters,
+    comment: comment,
   }
 }
