@@ -28,12 +28,14 @@ const run = async () => {
     'Authorization'
   ] = `Bearer ${loginResponse.data.accessJwt}`
 
-  const feedEndpoint = 'http://localhost:3000/feed'
+  const endpoint = 'http://localhost:3000'
+  const feedEndpoint = `${endpoint}/feed`
   const feedIdentifier = 'astronomy-feed'
 
   {
     const getFeedResponse = await axios.get(`${feedEndpoint}/${feedIdentifier}`)
-    const getFeedContentResponse = await axios.get(getFeedResponse.data.url)
+    const url = `${endpoint}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${getFeedResponse.data.atUri}&limit=5`
+    const getFeedContentResponse = await axios.get(url)
     console.log(getFeedContentResponse.data)
   }
 }
