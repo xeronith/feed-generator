@@ -26,7 +26,7 @@ export class CacheDatabase {
     this.write((connection) => {
       connection.exec(`CREATE TABLE IF NOT EXISTS "config" ("limit" INTEGER);`)
       connection.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS "post" 
-                            USING FTS5("uri", "author", "text", "indexedAt");`)
+                            USING FTS5("uri", "author", "text", "indexedAt", "createdAt");`)
     })
 
     new CronJob(
@@ -97,7 +97,7 @@ export class CacheDatabase {
       try {
         connection.pragma('journal_mode = WAL')
         connection.pragma('synchronous = NORMAL')
-        connection.pragma('cache_size = -32768')
+        connection.pragma('cache_size = -20480')
 
         callback(connection)
       } finally {

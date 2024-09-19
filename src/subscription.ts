@@ -68,12 +68,12 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         if (buffer.length >= 250) {
           await Cache.write((connection) => {
             const stmt = connection.prepare(
-              'INSERT INTO "post" ("uri", "author", "text", "indexedAt") VALUES (?, ?, ?, ?)',
+              'INSERT INTO "post" ("uri", "author", "text", "indexedAt", "createdAt") VALUES (?, ?, ?, ?, ?)',
             )
 
             const transaction = connection.transaction((rows) => {
               for (const row of rows) {
-                stmt.run(row.uri, row.author, row.text, row.indexedAt)
+                stmt.run(row.uri, row.author, row.text, row.indexedAt, row.createdAt)
               }
             })
 
