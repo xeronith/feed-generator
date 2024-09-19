@@ -283,7 +283,7 @@ const makeRouter = (ctx: AppContext) => {
         type: result.type,
         state: result.state,
         createdAt: result.createdAt,
-        url: `${ctx.cfg.protocol}://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${result.identifier}&limit=100`,
+        atUri: `at://${req['bsky'].did}/app.bsky.feed.generator/${result.identifier}`,
       })
     } catch (error) {
       return res.status(500).json({
@@ -339,7 +339,7 @@ const makeRouter = (ctx: AppContext) => {
             type: feed.type,
             state: feed.state,
             createdAt: feed.createdAt,
-            url: `${ctx.cfg.protocol}://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}&limit=100`,
+            atUri: `at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}`,
           }
         }),
       )
@@ -414,7 +414,7 @@ const makeRouter = (ctx: AppContext) => {
       status: 'created',
       identifier: identifier,
       did: did,
-      url: `${ctx.cfg.protocol}://${ctx.cfg.hostname}/xrpc/app.bsky.feed.getFeedSkeleton?feed=at://${did}/app.bsky.feed.generator/${identifier}&limit=100`,
+      atUri: `at://${did}/app.bsky.feed.generator/${identifier}`,
     })
   })
 
