@@ -15,6 +15,8 @@ export const BigQueryExecutor = async (
   identifier: string,
   definition: Definition,
 ) => {
+  console.time('-> EXEC')
+  
   const bigquery = new BigQuery({
     projectId: ctx.cfg.bigQueryProjectId,
     keyFilename: path.resolve(__dirname, '../..', ctx.cfg.bigQueryKeyFile),
@@ -48,10 +50,14 @@ export const BigQueryExecutor = async (
 
       console.debug(queryBuilder.comment)
 
+      console.time('-> BQ')
+
       const [queryResult] = await bigquery.query({
         query: queryBuilder.query,
         params: queryBuilder.parameters,
       })
+
+      console.timeEnd('-> BQ')
 
       refreshCache(ctx, identifier, queryResult)
 
@@ -82,6 +88,8 @@ export const BigQueryExecutor = async (
       definition,
     )
 
+    console.time('-> CACHE')
+
     await Cache.read((connection) => {
       console.debug(realtimeQueryBuilder.comment)
 
@@ -89,6 +97,8 @@ export const BigQueryExecutor = async (
       const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
       result = realtimeQueryResult.concat(result)
     })
+
+    console.timeEnd('-> CACHE')
 
     const refreshedCache = refreshCache(ctx, identifier, result)
 
@@ -109,10 +119,14 @@ export const BigQueryExecutor = async (
 
     console.debug(realtimeQueryBuilder.comment)
 
+    console.time('-> BQ(R)')
+
     const [realtimeQueryResult] = await bigquery.query({
       query: realtimeQueryBuilder.query,
       params: realtimeQueryBuilder.parameters,
     })
+
+    console.timeEnd('-> BQ(R)')
 
     result = realtimeQueryResult.concat(result)
 
@@ -155,6 +169,8 @@ export const BigQueryExecutor = async (
     }
   }
 
+  console.timeEnd('-> EXEC')
+
   return {
     cursor,
     feed,
@@ -164,7 +180,7 @@ export const BigQueryExecutor = async (
 const refreshCache = (
   ctx: AppContext,
   identifier: string,
-  result: { uri: string; indexedAt: string, createdAt: string }[],
+  result: { uri: string; indexedAt: string; createdAt: string }[],
 ) => {
   const seen = new Set<string>()
   result = result.filter((item) => {
