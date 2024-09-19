@@ -28,6 +28,7 @@
     "@google-cloud/bigquery": "^7.9.0",
     "@slack/webhook": "^7.0.3",
     "axios": "^1.7.7",
+    "better-sqlite-pool": "^0.3.2",
     "better-sqlite3": "^8.3.0",
     "cors": "^2.8.5",
     "cron": "^3.1.7",

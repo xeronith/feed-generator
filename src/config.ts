@@ -1,10 +1,8 @@
 import { Database } from './db'
-import SqliteDb from 'better-sqlite3'
 import { HandleResolver, DidResolver } from '@atproto/identity'
 
 export type AppContext = {
   db: Database
-  cacheDb: SqliteDb.Database
   handleResolver: HandleResolver
   didResolver: DidResolver
   cfg: Config

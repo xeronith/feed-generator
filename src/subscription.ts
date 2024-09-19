@@ -4,23 +4,18 @@ import {
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import { BigQuery, BigQueryOptions } from '@google-cloud/bigquery'
-import SqliteDb from 'better-sqlite3'
 import { Post } from './db/schema'
 import { Config } from './config'
 import { Database } from './db'
 import path from 'path'
+import Cache from './db/cache'
 
 let buffer: Post[] = []
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   protected bigquery: BigQuery
 
-  constructor(
-    public db: Database,
-    public cacheDb: SqliteDb.Database,
-    public cfg: Config,
-    public service: string,
-  ) {
+  constructor(public db: Database, public cfg: Config, public service: string) {
     super(db, service)
 
     const opts: BigQueryOptions = {
@@ -70,17 +65,19 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
       if (this.cfg.localFirehose) {
         if (buffer.length >= 250) {
-          const stmt = this.cacheDb.prepare(
-            'INSERT INTO "post" ("uri", "author", "text", "indexedAt") VALUES (?, ?, ?, ?)',
-          )
+          await Cache.write((connection) => {
+            const stmt = connection.prepare(
+              'INSERT INTO "post" ("uri", "author", "text", "indexedAt") VALUES (?, ?, ?, ?)',
+            )
 
-          const transaction = this.cacheDb.transaction((rows) => {
-            for (const row of rows) {
-              stmt.run(row.uri, row.author, row.text, row.indexedAt)
-            }
+            const transaction = connection.transaction((rows) => {
+              for (const row of rows) {
+                stmt.run(row.uri, row.author, row.text, row.indexedAt)
+              }
+            })
+
+            transaction(buffer)
           })
-
-          transaction(buffer)
 
           console.log('repo subscription local flush')
           buffer.length = 0

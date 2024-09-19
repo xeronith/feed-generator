@@ -5,6 +5,7 @@ import { Identity } from '..'
 import { Definition } from './types'
 import { InProcCache } from './inproc-cache'
 import * as LZString from 'lz-string'
+import Cache from '../../db/cache'
 import path from 'path'
 
 export const BigQueryExecutor = async (
@@ -79,10 +80,11 @@ export const BigQueryExecutor = async (
       definition,
     )
 
-    const stmt = ctx.cacheDb.prepare(realtimeQueryBuilder.query)
-    const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
-
-    result = realtimeQueryResult.concat(result)
+    await Cache.read((connection) => {
+      const stmt = connection.prepare(realtimeQueryBuilder.query)
+      const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
+      result = realtimeQueryResult.concat(result)
+    })
 
     const refreshedAt = refreshCache(ctx, identifier, result)
 
