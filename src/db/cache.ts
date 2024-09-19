@@ -96,6 +96,7 @@ export class CacheDatabase {
     return pool.acquire().then((connection) => {
       try {
         connection.pragma('journal_mode = WAL')
+        connection.pragma('synchronous = NORMAL')
         connection.pragma('cache_size = -32768')
 
         callback(connection)
