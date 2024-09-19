@@ -69,10 +69,7 @@ export const BigQueryExecutor = async (
     }
 
     InProcCache[identifier] = {
-      content: JSON.parse(
-        cache ? LZString.decompressFromUTF16(cache.content) : '[]',
-      ),
-
+      content: JSON.parse(cache ? cache.content : '[]'),
       refreshedAt: cache?.refreshedAt ?? new Date().toISOString(),
     }
   }
@@ -209,7 +206,7 @@ const refreshCache = (
 
   const cacheItem = {
     identifier: identifier,
-    content: LZString.compressToUTF16(JSON.stringify(result ?? [])),
+    content: JSON.stringify(result ?? []),
     refreshedAt: refreshedAt,
   }
 
