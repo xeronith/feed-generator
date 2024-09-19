@@ -4,7 +4,6 @@ import { AppContext } from '../../config'
 import { Identity } from '..'
 import { Definition } from './types'
 import { InProcCache } from './inproc-cache'
-import * as LZString from 'lz-string'
 import Cache from '../../db/cache'
 import path from 'path'
 
@@ -22,64 +21,15 @@ export const BigQueryExecutor = async (
     keyFilename: path.resolve(__dirname, '../..', ctx.cfg.bigQueryKeyFile),
   })
 
-  const cacheTimeout = new Date(
-    new Date().getTime() - ctx.cfg.cacheTimeout,
-  ).toISOString()
+  await timeMachine(bigquery, ctx, params, identity, identifier, definition)
 
-  if (
-    !InProcCache[identifier] ||
-    InProcCache[identifier].refreshedAt < cacheTimeout
-  ) {
-    let cache = await ctx.db
-      .selectFrom('cache')
-      .selectAll()
-      .where('identifier', '=', identifier)
-      .where('refreshedAt', '>', cacheTimeout)
-      .executeTakeFirst()
-
-    if (!cache) {
-      const queryBuilder = buildQuery(
-        ctx.cfg.bigQueryDatasetId,
-        ctx.cfg.bigQueryTableId,
-        `TIMESTAMP_SUB(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY), INTERVAL ${ctx.cfg.maxInterval} DAY)`,
-        params,
-        identity,
-        identifier,
-        definition,
-      )
-
-      console.debug(queryBuilder.comment)
-
-      console.time('-> BQ')
-
-      const [queryResult] = await bigquery.query({
-        query: queryBuilder.query,
-        params: queryBuilder.parameters,
-      })
-
-      console.timeEnd('-> BQ')
-
-      refreshCache(ctx, identifier, queryResult)
-
-      cache = await ctx.db
-        .selectFrom('cache')
-        .selectAll()
-        .where('identifier', '=', identifier)
-        .executeTakeFirst()
-    }
-
-    InProcCache[identifier] = {
-      content: JSON.parse(cache ? cache.content : '[]'),
-      refreshedAt: cache?.refreshedAt ?? new Date().toISOString(),
-    }
+  let result: any[] = []
+  if (InProcCache[identifier]) {
+    result = InProcCache[identifier].content
   }
-
-  let result: any[] = InProcCache[identifier].content
 
   if (ctx.cfg.localRealtimeEnabled && ctx.cfg.localFirehose) {
     const realtimeQueryBuilder = buildLocalQuery(
-      `'${InProcCache[identifier].refreshedAt}'`,
-      params,
       identity,
       identifier,
       definition,
@@ -102,12 +52,7 @@ export const BigQueryExecutor = async (
 
     console.timeEnd('-> CACHE')
 
-    const refreshedCache = refreshCache(ctx, identifier, result)
-
-    InProcCache[identifier] = {
-      content: refreshedCache.result,
-      refreshedAt: refreshedCache.refreshedAt,
-    }
+    refreshCache(ctx, identifier, result)
   } else if (ctx.cfg.bigQueryRealtimeEnabled) {
     const realtimeQueryBuilder = buildQuery(
       ctx.cfg.bigQueryDatasetId,
@@ -132,12 +77,7 @@ export const BigQueryExecutor = async (
 
     result = realtimeQueryResult.concat(result)
 
-    const refreshedCache = refreshCache(ctx, identifier, result)
-
-    InProcCache[identifier] = {
-      content: refreshedCache.result,
-      refreshedAt: refreshedCache.refreshedAt,
-    }
+    refreshCache(ctx, identifier, result)
   }
 
   console.time('-> CURSOR')
@@ -202,7 +142,7 @@ const refreshCache = (
 
   const refreshedAt = new Date().toISOString()
 
-  console.time('-> COMPRESS')
+  console.time('-> SERIALIZE')
 
   const cacheItem = {
     identifier: identifier,
@@ -210,7 +150,7 @@ const refreshCache = (
     refreshedAt: refreshedAt,
   }
 
-  console.timeEnd('-> COMPRESS')
+  console.timeEnd('-> SERIALIZE')
 
   console.time('-> PUT')
 
@@ -227,14 +167,70 @@ const refreshCache = (
 
   console.timeEnd('-> PUT')
 
-  console.timeEnd('-> REFRESH')
+  InProcCache[identifier] = {
+    content: result,
+    refreshedAt: refreshedAt,
+  }
 
-  return { result, refreshedAt }
+  console.timeEnd('-> REFRESH')
+}
+
+const timeMachine = async (
+  bigquery: BigQuery,
+  ctx: AppContext,
+  params: QueryParams,
+  identity: Identity,
+  identifier: string,
+  definition: Definition,
+) => {
+  const cacheTimeout = new Date(
+    new Date().getTime() - ctx.cfg.cacheTimeout,
+  ).toISOString()
+
+  if (
+    !InProcCache[identifier] ||
+    InProcCache[identifier].refreshedAt < cacheTimeout
+  ) {
+    let cache = await ctx.db
+      .selectFrom('cache')
+      .selectAll()
+      .where('identifier', '=', identifier)
+      .where('refreshedAt', '>', cacheTimeout)
+      .executeTakeFirst()
+
+    if (!cache) {
+      const queryBuilder = buildQuery(
+        ctx.cfg.bigQueryDatasetId,
+        ctx.cfg.bigQueryTableId,
+        `TIMESTAMP_SUB(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY), INTERVAL ${ctx.cfg.maxInterval} DAY)`,
+        params,
+        identity,
+        identifier,
+        definition,
+      )
+
+      console.debug(queryBuilder.comment)
+
+      console.time('-> BQ')
+
+      const [queryResult] = await bigquery.query({
+        query: queryBuilder.query,
+        params: queryBuilder.parameters,
+      })
+
+      refreshCache(ctx, identifier, queryResult)
+
+      console.timeEnd('-> BQ')
+    } else {
+      InProcCache[identifier] = {
+        content: JSON.parse(cache.content),
+        refreshedAt: cache.refreshedAt,
+      }
+    }
+  }
 }
 
 const buildLocalQuery = (
-  interval: string,
-  params: QueryParams,
   identity: Identity,
   identifier: string,
   definition: Definition,
