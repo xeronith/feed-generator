@@ -36,7 +36,7 @@ export class CacheDatabase {
           try {
             connection.exec(
               `DELETE FROM "post" WHERE
-                "indexedAt" < DATETIME('now', '-7 day')`,
+                "indexedAt" < DATETIME('now', '-1 day')`,
             )
 
             console.debug('cache cleanup')
