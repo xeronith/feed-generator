@@ -90,11 +90,11 @@ export const BigQueryExecutor = async (
       result = realtimeQueryResult.concat(result)
     })
 
-    const refreshedAt = refreshCache(ctx, identifier, result)
+    const refreshedCache = refreshCache(ctx, identifier, result)
 
     InProcCache[identifier] = {
-      content: result,
-      refreshedAt: refreshedAt,
+      content: refreshedCache.result,
+      refreshedAt: refreshedCache.refreshedAt,
     }
   } else if (ctx.cfg.bigQueryRealtimeEnabled) {
     const realtimeQueryBuilder = buildQuery(
@@ -116,11 +116,11 @@ export const BigQueryExecutor = async (
 
     result = realtimeQueryResult.concat(result)
 
-    const refreshedAt = refreshCache(ctx, identifier, result)
+    const refreshedCache = refreshCache(ctx, identifier, result)
 
     InProcCache[identifier] = {
-      content: result,
-      refreshedAt: refreshedAt,
+      content: refreshedCache.result,
+      refreshedAt: refreshedCache.refreshedAt,
     }
   }
 
@@ -149,7 +149,21 @@ export const BigQueryExecutor = async (
   }
 }
 
-const refreshCache = (ctx: AppContext, identifier: string, result: any[]) => {
+const refreshCache = (
+  ctx: AppContext,
+  identifier: string,
+  result: { uri: string; indexedAt: string }[],
+) => {
+  const seen = new Set<string>()
+  result = result.filter((item) => {
+    if (seen.has(item.uri)) {
+      return false
+    } else {
+      seen.add(item.uri)
+      return true
+    }
+  })
+
   const refreshedAt = new Date().toISOString()
 
   const cacheItem = {
@@ -169,7 +183,7 @@ const refreshCache = (ctx: AppContext, identifier: string, result: any[]) => {
     )
     .execute()
 
-  return refreshedAt
+  return { result, refreshedAt }
 }
 
 const buildLocalQuery = (
