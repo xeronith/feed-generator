@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 import FeedGenerator from './server'
+import { maybeStr, maybeInt, maybeBoolean } from './util/helpers'
 
 const run = async () => {
   dotenv.config()
@@ -12,7 +13,9 @@ const run = async () => {
     sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? ':memory:',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
     localFirehose: maybeBoolean(process.env.FEEDGEN_LOCAL_FIREHOSE),
-    localRealtimeEnabled: maybeBoolean(process.env.FEEDGEN_LOCAL_REALTIME_ENABLED),
+    localRealtimeEnabled: maybeBoolean(
+      process.env.FEEDGEN_LOCAL_REALTIME_ENABLED,
+    ),
     subscriptionEndpoint:
       maybeStr(process.env.FEEDGEN_SUBSCRIPTION_ENDPOINT) ??
       'wss://bsky.network',
@@ -43,23 +46,6 @@ const run = async () => {
   console.log(
     `🤖 running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}`,
   )
-}
-
-const maybeBoolean = (val?: string) => {
-  if (!val) return false
-  return val === 'true'
-}
-
-const maybeStr = (val?: string) => {
-  if (!val) return undefined
-  return val
-}
-
-const maybeInt = (val?: string) => {
-  if (!val) return undefined
-  const int = parseInt(val, 10)
-  if (isNaN(int)) return undefined
-  return int
 }
 
 run()

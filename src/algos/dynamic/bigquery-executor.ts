@@ -33,12 +33,14 @@ export const BigQueryExecutor = async (
       identity,
       identifier,
       definition,
+      params.limit * 5,
+      0,
     )
 
     console.time('-> CACHE')
 
     await Cache.read((connection) => {
-      console.debug(realtimeQueryBuilder.comment)
+      console.debug(realtimeQueryBuilder.log)
 
       const stmt = connection.prepare(realtimeQueryBuilder.query)
       const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
@@ -234,58 +236,53 @@ const buildLocalQuery = (
   identity: Identity,
   identifier: string,
   definition: Definition,
+  limit: number,
+  offset: number,
 ) => {
   let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE`
   query += ` "rowid" > 0`
 
-  const parameters: any[] = []
-  let comment = query
+  const values: string[] = []
+  let log = query
 
-  if (Array.isArray(definition.authors) && definition.authors.length > 0) {
-    definition.authors.forEach((author) => parameters.push(author))
-    const authorList = definition.authors.map(() => '?').join(', ')
-    const authorListRaw = definition.authors
-      .map((author) => `'${author}'`)
-      .join(', ')
+  const iterator = (e: string) => {
+    values.push(`"${e}"`)
+  }
 
-    query += ` AND "author" IN (${authorList})`
-    comment += ` AND "author" IN (${authorListRaw})`
+  if (Array.isArray(definition.authors)) {
+    definition.authors.forEach(iterator)
   }
 
   if (Array.isArray(definition.hashtags)) {
-    definition.hashtags.forEach((hashtag) => {
-      parameters.push(hashtag.replace('@', '').replace('#', ''))
-      query += ` AND "text" MATCH ?`
-      comment += ` AND "text" MATCH '${parameters.at(-1)}'`
-    })
+    definition.hashtags.forEach(iterator)
   }
 
   if (Array.isArray(definition.mentions)) {
-    definition.mentions.forEach((mention) => {
-      parameters.push(mention.replace('@', '').replace('#', ''))
-      query += ` AND "text" MATCH ?`
-      comment += ` AND "text" MATCH '${parameters.at(-1)}'`
-    })
+    definition.mentions.forEach(iterator)
   }
 
   if (Array.isArray(definition.search)) {
-    definition.search.forEach((criteria) => {
-      parameters.push(criteria.replace('@', '').replace('#', ''))
-      query += ` AND "text" MATCH ?`
-      comment += ` AND "text" MATCH '${parameters.at(-1)}'`
-    })
+    definition.search.forEach(iterator)
   }
 
-  const ordering = ` ORDER BY "rowid" DESC LIMIT 10000;`
-  query += ordering
-  comment += ordering
+  if (values.length) {
+    query += ` AND "text" MATCH ?`
+    log += ` AND "text" MATCH '${values.join(' ')}'`
+  }
 
-  comment = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${comment}`
+  let ordering = ` ORDER BY "rowid" DESC`
+  ordering += ` LIMIT ${limit ?? 100}`
+  ordering += ` OFFSET ${offset ?? 0};`
+
+  query += ordering
+  log += ordering
+
+  log = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${log}`
 
   return {
-    query,
-    parameters,
-    comment,
+    query: query,
+    parameters: values.join(' '),
+    log: log,
   }
 }
 

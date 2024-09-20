@@ -4,6 +4,7 @@ import * as path from 'path'
 import { GetFolderSizeInBytes } from '../util/fs'
 import { Slack } from '../util/slack'
 import { Pool, PoolConnection } from 'better-sqlite-pool'
+import { maybeInt } from '../util/helpers'
 
 export class CacheDatabase {
   private writer: Pool
@@ -29,6 +30,7 @@ export class CacheDatabase {
                             USING FTS5("uri", "author", "text", "indexedAt", "createdAt");`)
     })
 
+    const interval = maybeInt(process.env.FEEDGEN_MAX_INTERVAL) ?? 7
     new CronJob(
       '0 0 0 * * *',
       () => {
@@ -36,7 +38,7 @@ export class CacheDatabase {
           try {
             connection.exec(
               `DELETE FROM "post" WHERE
-                "indexedAt" < DATETIME('now', '-1 day')`,
+                "indexedAt" < DATETIME('now', '-${interval} day')`,
             )
 
             console.debug('cache cleanup')
