@@ -49,21 +49,23 @@ export const handler = async (
 
   if (Array.isArray(definition.hashtags)) {
     definition.hashtags.forEach((hashtag) => {
-      const value = hashtag.trim().replace('-', ' ')
+      let value = hashtag.trim()
+      if (!value.startsWith('#')) value = `#${value}`
       if (value) hashtags.push(value)
     })
   }
 
   if (Array.isArray(definition.mentions)) {
     definition.mentions.forEach((mention) => {
-      const value = mention.trim().replace('-', ' ')
+      let value = mention.trim()
+      if (!value.startsWith('@')) value = `@${value}`
       if (value) mentions.push(value)
     })
   }
 
   if (Array.isArray(definition.search)) {
     definition.search.forEach((criteria) => {
-      const value = criteria.trim().replace('-', ' ')
+      const value = criteria.trim()
       if (value) search.push(value)
     })
   }
