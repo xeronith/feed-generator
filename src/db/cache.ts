@@ -36,12 +36,10 @@ export class CacheDatabase {
       () => {
         this.write((connection) => {
           try {
-            connection.exec(
-              `DELETE FROM "post" WHERE
-                "indexedAt" < DATETIME('now', '-${interval} day')`,
-            )
-
-            console.debug('cache cleanup')
+            const query = `DELETE FROM "post" WHERE "indexedAt" < DATETIME('now', '-${interval} day')`
+            connection.exec(query)
+            
+            console.debug('cache cleanup', query)
           } catch (error) {
             console.error('could not clean cache', error)
           }
