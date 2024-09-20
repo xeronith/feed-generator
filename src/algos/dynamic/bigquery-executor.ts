@@ -60,13 +60,14 @@ export const BigQueryExecutor = async (
       ctx.cfg.bigQueryDatasetId,
       ctx.cfg.bigQueryRealtimeTableId,
       `'${InProcCache[identifier].refreshedAt}'`,
-      params,
       identity,
       identifier,
       definition,
+      1000,
+      0,
     )
 
-    console.debug(realtimeQueryBuilder.comment)
+    console.debug(realtimeQueryBuilder.log)
 
     console.time('-> BQ(R)')
 
@@ -205,13 +206,14 @@ const timeMachine = async (
         ctx.cfg.bigQueryDatasetId,
         ctx.cfg.bigQueryTableId,
         `TIMESTAMP_SUB(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY), INTERVAL ${ctx.cfg.maxInterval} DAY)`,
-        params,
         identity,
         identifier,
         definition,
+        1000,
+        0,
       )
 
-      console.debug(queryBuilder.comment)
+      console.debug(queryBuilder.log)
 
       console.time('-> BQ')
 
@@ -239,35 +241,39 @@ const buildLocalQuery = (
   limit: number,
   offset: number,
 ) => {
-  let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE`
-  query += ` "rowid" > 0`
+  let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE "rowid" > 0`,
+    log = query
 
-  const values: string[] = []
-  let log = query
-
-  const iterator = (e: string) => {
-    values.push(`"${e}"`)
-  }
+  const authors: string[] = [],
+    values: string[] = [],
+    parameters: string[] = []
 
   if (Array.isArray(definition.authors)) {
-    definition.authors.forEach(iterator)
+    definition.authors.forEach((e) => authors.push(`"${e}"`))
   }
 
   if (Array.isArray(definition.hashtags)) {
-    definition.hashtags.forEach(iterator)
+    definition.hashtags.forEach((e) => values.push(`"${e}"`))
   }
 
   if (Array.isArray(definition.mentions)) {
-    definition.mentions.forEach(iterator)
+    definition.mentions.forEach((e) => values.push(`"${e}"`))
   }
 
   if (Array.isArray(definition.search)) {
-    definition.search.forEach(iterator)
+    definition.search.forEach((e) => values.push(`"${e}"`))
+  }
+
+  if (authors.length) {
+    query += ` AND "author" MATCH ?`
+    log += ` AND "author" MATCH '${authors.join(' OR ')}'`
+    parameters.push(authors.join(' OR '))
   }
 
   if (values.length) {
     query += ` AND "text" MATCH ?`
     log += ` AND "text" MATCH '${values.join(' ')}'`
+    parameters.push(values.join(' '))
   }
 
   let ordering = ` ORDER BY "rowid" DESC`
@@ -280,9 +286,9 @@ const buildLocalQuery = (
   log = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${log}`
 
   return {
-    query: query,
-    parameters: values.join(' '),
-    log: log,
+    query,
+    parameters,
+    log,
   }
 }
 
@@ -290,67 +296,63 @@ const buildQuery = (
   datasetId: string,
   tableId: string,
   interval: string,
-  params: QueryParams,
   identity: Identity,
   identifier: string,
   definition: Definition,
+  limit: number,
+  offset: number,
 ) => {
-  let query = `SELECT \`uri\`, \`indexedAt\`, \`createdAt\` FROM \`${datasetId}.${tableId}\` WHERE`
-  query += ` \`indexedAt\` > ${interval}`
+  let query = `SELECT \`uri\`, \`indexedAt\`, \`createdAt\` FROM \`${datasetId}.${tableId}\` WHERE \`indexedAt\` > ${interval}`,
+    log = query
 
-  if (params.cursor) {
-    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-    query += ` AND \`indexedAt\` < '${timeStr}'`
-  }
+  const authors: string[] = [],
+    authorsLog: string[] = [],
+    authorsParam: string[] = [],
+    values: string[] = []
 
-  const parameters: any[] = []
-  let comment = query
-
-  if (Array.isArray(definition.authors) && definition.authors.length > 0) {
-    definition.authors.forEach((author) => parameters.push(author))
-    const authorList = definition.authors.map(() => '?').join(', ')
-    const authorListRaw = definition.authors
-      .map((author) => `'${author}'`)
-      .join(', ')
-
-    query += ` AND \`author\` IN (${authorList})`
-    comment += ` AND \`author\` IN (${authorListRaw})`
+  if (Array.isArray(definition.authors)) {
+    definition.authors.forEach((e) => {
+      authorsParam.push(`"${e}"`)
+      authors.push('SEARCH(`author`, ?)')
+      authorsLog.push(`SEARCH(\`author\`, '"${e}"')`)
+    })
   }
 
   if (Array.isArray(definition.hashtags)) {
-    definition.hashtags.forEach((hashtag) => {
-      parameters.push(hashtag)
-      query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${parameters.at(-1)}')`
-    })
+    definition.hashtags.forEach((e) => values.push(`"${e}"`))
   }
 
   if (Array.isArray(definition.mentions)) {
-    definition.mentions.forEach((mention) => {
-      parameters.push(mention)
-      query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${parameters.at(-1)}')`
-    })
+    definition.mentions.forEach((e) => values.push(`"${e}"`))
   }
 
   if (Array.isArray(definition.search)) {
-    definition.search.forEach((criteria) => {
-      parameters.push(criteria)
-      query += ` AND SEARCH(\`text\`, ?)`
-      comment += ` AND SEARCH(\`text\`, '${parameters.at(-1)}')`
-    })
+    definition.search.forEach((e) => values.push(`"${e}"`))
   }
 
-  const ordering = ` ORDER BY \`indexedAt\` DESC, \`uri\` DESC LIMIT 10000;`
-  query += ordering
-  comment += ordering
+  if (authors.length) {
+    query += ` AND (${authors.join(' OR ')})`
+    log += ` AND (${authorsLog.join(' OR ')})`
+  }
 
-  comment = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${comment}`
-  query = `${comment}\n\n${query}`
+  if (values.length) {
+    query += ` AND SEARCH(\`text\`, ?)`
+    log += ` AND SEARCH(\`text\`, '${values.join(' ')}')`
+  }
+
+  let ordering = ` ORDER BY \`indexedAt\` DESC`
+  ordering += ` LIMIT ${limit ?? 100}`
+  ordering += ` OFFSET ${offset ?? 0};`
+
+  query += ordering
+  log += ordering
+
+  log = `# ${identity.did}\n# ${identity.handle}\n# ${identifier}\n\n# ${log}`
+  query = `${log}\n\n${query}`
 
   return {
-    query,
-    parameters,
-    comment: comment,
+    query: query,
+    parameters: authorsParam.concat([values.join(' ')]),
+    log: log,
   }
 }
