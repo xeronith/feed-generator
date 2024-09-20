@@ -38,5 +38,5 @@ export type Feed = {
 export type Cache = {
   identifier: string
   content: string
-  refreshedAt: string
+  refreshedAt?: string
 }

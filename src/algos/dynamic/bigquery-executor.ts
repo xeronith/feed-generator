@@ -7,6 +7,8 @@ import { InProcCache } from './inproc-cache'
 import Cache from '../../db/cache'
 import path from 'path'
 
+const Epoch = '1970-01-01T00:00:00.000Z'
+
 export const BigQueryExecutor = async (
   ctx: AppContext,
   params: QueryParams,
@@ -21,42 +23,31 @@ export const BigQueryExecutor = async (
     keyFilename: path.resolve(__dirname, '../..', ctx.cfg.bigQueryKeyFile),
   })
 
-  await timeMachine(bigquery, ctx, params, identity, identifier, definition)
-
-  let result: any[] = []
-  if (InProcCache[identifier]) {
-    result = InProcCache[identifier].content
-  }
-
+  let cachedResult: any[] = InProcCache[identifier]?.content ?? []
   if (ctx.cfg.localRealtimeEnabled && ctx.cfg.localFirehose) {
     const realtimeQueryBuilder = buildLocalQuery(
       identity,
       identifier,
       definition,
-      params.limit * 5,
-      0,
+      params.limit,
     )
 
-    console.time('-> CACHE')
+    console.time('-> LRT')
 
     await Cache.read((connection) => {
       console.debug(realtimeQueryBuilder.log)
 
       const stmt = connection.prepare(realtimeQueryBuilder.query)
-      const realtimeQueryResult = stmt.all(realtimeQueryBuilder.parameters)
+      const realtimeResult = stmt.all(realtimeQueryBuilder.parameters)
 
-      if (realtimeQueryResult.length < 10000) {
-        result = realtimeQueryResult.concat(result)
-      } else {
-        result = realtimeQueryResult
-      }
+      cachedResult = realtimeResult.concat(cachedResult)
+      cachedResult = refreshCache(ctx, identifier, cachedResult, true)
     })
 
-    console.timeEnd('-> CACHE')
-
-    refreshCache(ctx, identifier, result)
+    console.timeEnd('-> LRT')
   } else if (ctx.cfg.bigQueryRealtimeEnabled) {
     const realtimeQueryBuilder = buildQuery(
+      params,
       ctx.cfg.bigQueryDatasetId,
       ctx.cfg.bigQueryRealtimeTableId,
       `'${InProcCache[identifier].refreshedAt}'`,
@@ -64,48 +55,54 @@ export const BigQueryExecutor = async (
       identifier,
       definition,
       1000,
-      0,
     )
 
     console.debug(realtimeQueryBuilder.log)
 
-    console.time('-> BQ(R)')
+    console.time('-> BQRT')
 
     const [realtimeQueryResult] = await bigquery.query({
       query: realtimeQueryBuilder.query,
       params: realtimeQueryBuilder.parameters,
     })
 
-    console.timeEnd('-> BQ(R)')
+    console.timeEnd('-> BQRT')
 
-    result = realtimeQueryResult.concat(result)
+    cachedResult = realtimeQueryResult.concat(cachedResult)
 
-    refreshCache(ctx, identifier, result)
+    refreshCache(ctx, identifier, cachedResult, false)
   }
 
   console.time('-> CURSOR')
 
   if (params.cursor) {
     const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-    result = result.filter((row) => {
-      if (row.createdAt) {
-        return row.createdAt < timeStr
-      }
-
-      return row.indexedAt < timeStr
+    cachedResult = cachedResult.filter((row) => {
+      return row.createdAt < timeStr
     })
   }
 
-  result = result.slice(0, params.limit)
+  if (cachedResult.length < params.limit) {
+    cachedResult = await timeMachine(
+      bigquery,
+      ctx,
+      params,
+      identity,
+      identifier,
+      definition,
+    )
+  }
+
+  cachedResult = cachedResult.slice(0, params.limit)
 
   console.timeEnd('-> CURSOR')
 
-  const feed = result.map((item) => ({
+  const feed = cachedResult.map((item) => ({
     post: item.uri,
   }))
 
   let cursor: string | undefined
-  const last = result.at(-1)
+  const last = cachedResult.at(-1)
   if (last) {
     if (last.createdAt) {
       cursor = new Date(last.createdAt.value ?? last.createdAt)
@@ -130,52 +127,71 @@ const refreshCache = (
   ctx: AppContext,
   identifier: string,
   result: { uri: string; indexedAt: string; createdAt: string }[],
+  local: boolean,
 ) => {
   console.time('-> REFRESH')
 
   const seen = new Set<string>()
-  result = result.filter((item) => {
-    if (seen.has(item.uri)) {
-      return false
-    } else {
-      seen.add(item.uri)
-      return true
-    }
-  })
-
-  const refreshedAt = new Date().toISOString()
+  result = result
+    .filter((item) => {
+      if (seen.has(item.uri)) {
+        return false
+      } else {
+        seen.add(item.uri)
+        return true
+      }
+    })
+    .slice(0, 10000)
 
   console.time('-> SERIALIZE')
 
-  const cacheItem = {
-    identifier: identifier,
-    content: JSON.stringify(result ?? []),
-    refreshedAt: refreshedAt,
-  }
+  const content = JSON.stringify(result ?? [])
 
   console.timeEnd('-> SERIALIZE')
 
   console.time('-> PUT')
 
-  ctx.db
-    .insertInto('cache')
-    .values(cacheItem)
-    .onConflict((e) =>
-      e.doUpdateSet({
-        content: cacheItem.content,
-        refreshedAt: cacheItem.refreshedAt,
-      }),
-    )
-    .execute()
+  if (local) {
+    ctx.db
+      .insertInto('cache')
+      .values({
+        identifier: identifier,
+        content: content,
+        refreshedAt: Epoch,
+      })
+      .onConflict((e) =>
+        e.doUpdateSet({
+          content: content,
+        }),
+      )
+      .execute()
+  } else {
+    ctx.db
+      .insertInto('cache')
+      .values({
+        identifier: identifier,
+        content: content,
+        refreshedAt: new Date().toISOString(),
+      })
+      .onConflict((e) =>
+        e.doUpdateSet({
+          content: content,
+          refreshedAt: new Date().toISOString(),
+        }),
+      )
+      .execute()
+  }
 
   console.timeEnd('-> PUT')
 
   InProcCache[identifier] = {
     content: result,
-    refreshedAt: refreshedAt,
+    refreshedAt: local ? Epoch : new Date().toISOString(),
   }
 
   console.timeEnd('-> REFRESH')
+
+  return result
 }
 
 const timeMachine = async (
@@ -190,27 +206,30 @@ const timeMachine = async (
     new Date().getTime() - ctx.cfg.cacheTimeout,
   ).toISOString()
 
-  if (
-    !InProcCache[identifier] ||
-    InProcCache[identifier].refreshedAt < cacheTimeout
-  ) {
-    let cache = await ctx.db
+  if (InProcCache[identifier].refreshedAt < cacheTimeout) {
+    const cache = await ctx.db
       .selectFrom('cache')
       .selectAll()
       .where('identifier', '=', identifier)
       .where('refreshedAt', '>', cacheTimeout)
       .executeTakeFirst()
 
-    if (!cache) {
+    if (!cache || (cache.refreshedAt ?? Epoch) < cacheTimeout) {
+      let interval = `TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${ctx.cfg.maxInterval} DAY)`
+      if (params.cursor) {
+        const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+        interval = `TIMESTAMP_SUB('${timeStr}', INTERVAL ${ctx.cfg.maxInterval} DAY)`
+      }
+
       const queryBuilder = buildQuery(
+        params,
         ctx.cfg.bigQueryDatasetId,
         ctx.cfg.bigQueryTableId,
-        `TIMESTAMP_SUB(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY), INTERVAL ${ctx.cfg.maxInterval} DAY)`,
+        interval,
         identity,
         identifier,
         definition,
-        1000,
-        0,
+        10000,
       )
 
       console.debug(queryBuilder.log)
@@ -222,16 +241,18 @@ const timeMachine = async (
         params: queryBuilder.parameters,
       })
 
-      refreshCache(ctx, identifier, queryResult)
+      refreshCache(ctx, identifier, queryResult, false)
 
       console.timeEnd('-> BQ')
     } else {
       InProcCache[identifier] = {
         content: JSON.parse(cache.content),
-        refreshedAt: cache.refreshedAt,
+        refreshedAt: cache.refreshedAt ?? new Date().toISOString(),
       }
     }
   }
+
+  return InProcCache[identifier].content
 }
 
 const buildLocalQuery = (
@@ -239,7 +260,6 @@ const buildLocalQuery = (
   identifier: string,
   definition: Definition,
   limit: number,
-  offset: number,
 ) => {
   let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE "rowid" > 0`,
     log = query
@@ -277,8 +297,7 @@ const buildLocalQuery = (
   }
 
   let ordering = ` ORDER BY "rowid" DESC`
-  ordering += ` LIMIT ${limit ?? 100}`
-  ordering += ` OFFSET ${offset ?? 0};`
+  ordering += ` LIMIT ${limit ?? 100};`
 
   query += ordering
   log += ordering
@@ -293,6 +312,7 @@ const buildLocalQuery = (
 }
 
 const buildQuery = (
+  params: QueryParams,
   datasetId: string,
   tableId: string,
   interval: string,
@@ -300,10 +320,14 @@ const buildQuery = (
   identifier: string,
   definition: Definition,
   limit: number,
-  offset: number,
 ) => {
-  let query = `SELECT \`uri\`, \`indexedAt\`, \`createdAt\` FROM \`${datasetId}.${tableId}\` WHERE \`indexedAt\` > ${interval}`,
-    log = query
+  let query = `SELECT \`uri\`, \`indexedAt\`, \`createdAt\` FROM \`${datasetId}.${tableId}\` WHERE \`indexedAt\` > ${interval}`
+  if (params.cursor) {
+    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+    query += ` AND \`indexedAt\` < '${timeStr}'`
+  }
+
+  let log = query
 
   const authors: string[] = [],
     authorsLog: string[] = [],
@@ -341,8 +365,7 @@ const buildQuery = (
   }
 
   let ordering = ` ORDER BY \`indexedAt\` DESC`
-  ordering += ` LIMIT ${limit ?? 100}`
-  ordering += ` OFFSET ${offset ?? 0};`
+  ordering += ` LIMIT ${limit ?? 100};`
 
   query += ordering
   log += ordering
