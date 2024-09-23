@@ -3,6 +3,7 @@ import path from 'path'
 import events from 'events'
 import express from 'express'
 import cors from 'cors'
+import morgan from 'morgan'
 import { Storage } from '@google-cloud/storage'
 import { BigQuery } from '@google-cloud/bigquery'
 import { HandleResolver, DidResolver, MemoryCache } from '@atproto/identity'
@@ -39,6 +40,7 @@ export class FeedGenerator {
 
   static create(cfg: Config) {
     const app = express()
+    app.use(morgan('combined'))
     app.use(cors())
     app.use(AuthMiddleware)
     const db = createDb(cfg.sqliteLocation)
