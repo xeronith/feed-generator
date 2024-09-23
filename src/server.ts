@@ -3,6 +3,7 @@ import path from 'path'
 import events from 'events'
 import express from 'express'
 import cors from 'cors'
+import { Storage } from '@google-cloud/storage'
 import { BigQuery } from '@google-cloud/bigquery'
 import { HandleResolver, DidResolver, MemoryCache } from '@atproto/identity'
 import { createDb, Database, migrateToLatest } from './db'
@@ -15,6 +16,7 @@ import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import wellKnown from './well-known'
 import feed from './feed'
+import { createUploader } from './uploader'
 
 export class FeedGenerator {
   public app: express.Application
@@ -41,9 +43,16 @@ export class FeedGenerator {
     app.use(AuthMiddleware)
     const db = createDb(cfg.sqliteLocation)
     const cacheDb = new CacheDatabase(cfg)
+    const uploader = createUploader(cfg, db)
+
     const bq = new BigQuery({
       projectId: cfg.bigQueryProjectId,
       keyFilename: path.resolve(__dirname, cfg.bigQueryKeyFile),
+    })
+
+    const storage = new Storage({
+      projectId: cfg.gcsProjectId,
+      keyFilename: path.resolve(__dirname, cfg.gcsKeyFile),
     })
 
     const didCache = new MemoryCache()
@@ -73,9 +82,11 @@ export class FeedGenerator {
       cfg,
       handleResolver,
       didResolver,
+      storage,
       bq,
       db,
       cacheDb,
+      uploader,
     }
 
     feedGeneration(server, ctx)

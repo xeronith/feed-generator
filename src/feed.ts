@@ -34,6 +34,65 @@ interface UpdateStateRequestBody {
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
 
+  router.put(
+    '/feed/:identifier/avatar',
+    ctx.uploader.single('file'),
+    async (req, res) => {
+      if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
+        return res.sendStatus(404)
+      }
+
+      const did = req['bsky'].did
+      const identifier = req.params.identifier
+      const file = req.file
+
+      if (!file) {
+        return res
+          .status(400)
+          .send('No file uploaded or file size exceeds 64kb limit.')
+      }
+
+      const avatarUrl = file['linkUrl']
+
+      try {
+        const record = await ctx.db
+          .selectFrom('feed')
+          .selectAll()
+          .where('did', '=', did)
+          .where('identifier', '=', identifier)
+          .executeTakeFirst()
+
+        if (!record) {
+          return res.sendStatus(404)
+        }
+
+        const definition = JSON.parse(record.definition)
+        if (definition.avatar !== avatarUrl) {
+          definition.avatar = avatarUrl
+
+          ctx.db
+            .updateTable('feed')
+            .set({
+              avatar: avatarUrl,
+              definition: JSON.stringify(definition),
+              updatedAt: new Date().toISOString(),
+            })
+            .where('identifier', '=', identifier)
+            .where('did', '=', did)
+            .execute()
+        }
+      } catch (error) {
+        return res.status(500).json({
+          error: 'failed',
+        })
+      }
+
+      res.status(200).json({
+        url: avatarUrl,
+      })
+    },
+  )
+
   const allowedStates = ['draft', 'ready', 'published']
   router.put('/feed/:identifier', async (req, res) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {

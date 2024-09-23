@@ -1,15 +1,19 @@
 import { HandleResolver, DidResolver } from '@atproto/identity'
+import { Storage } from '@google-cloud/storage'
 import { BigQuery } from '@google-cloud/bigquery'
 import { Database } from './db'
 import { CacheDatabase } from './db/cache'
+import { Multer } from 'multer'
 
 export type AppContext = {
   cfg: Config
   handleResolver: HandleResolver
   didResolver: DidResolver
+  storage: Storage
   bq: BigQuery
   db: Database
   cacheDb: CacheDatabase
+  uploader: Multer
 }
 
 export type Config = {
@@ -33,4 +37,7 @@ export type Config = {
   bigQueryTableId: string
   bigQueryRealtimeTableId: string
   bigQueryRealtimeEnabled: boolean
+  gcsKeyFile: string
+  gcsProjectId: string
+  gcsBucket: string
 }

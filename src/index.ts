@@ -36,6 +36,9 @@ const run = async () => {
     bigQueryRealtimeEnabled: process.env.BIGQUERY_REALTIME_TABLE_ID
       ? true
       : false,
+    gcsKeyFile: maybeStr(process.env.GCS_KEY_FILE) ?? '',
+    gcsProjectId: maybeStr(process.env.GCS_PROJECT_ID) ?? '',
+    gcsBucket: maybeStr(process.env.GCS_BUCKET) ?? '',
   }
 
   const server = FeedGenerator.create(cfg)

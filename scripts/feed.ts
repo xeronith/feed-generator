@@ -1,5 +1,8 @@
 import dotenv from 'dotenv'
 import axios from 'axios'
+import fs from 'fs'
+import path from 'path'
+import FormData from 'form-data'
 import { AtpAgent } from '@atproto/api'
 
 const run = async () => {
@@ -71,6 +74,15 @@ const run = async () => {
     mentions: ['@user3', '@user4'],
     search: ['nebula-modified', 'galaxy-modified', 'star-modified'],
   })
+
+  // update avatar
+  {
+    const data = new FormData()
+    const filepath = path.resolve(__dirname, 'feed.png')
+    data.append('file', fs.createReadStream(filepath))
+
+    await axios.put(`${feedEndpoint}/${feedIdentifier}/avatar`, data)
+  }
 
   // pin feed
   await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
