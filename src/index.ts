@@ -39,6 +39,8 @@ const run = async () => {
     gcsKeyFile: maybeStr(process.env.GCS_KEY_FILE) ?? '',
     gcsProjectId: maybeStr(process.env.GCS_PROJECT_ID) ?? '',
     gcsBucket: maybeStr(process.env.GCS_BUCKET) ?? '',
+    httpLogEnabled: maybeBoolean(process.env.HTTP_LOG_ENABLED),
+    httpLogFormat: maybeStr(process.env.HTTP_LOG_FORMAT) ?? 'combined',
   }
 
   const server = FeedGenerator.create(cfg)

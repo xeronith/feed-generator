@@ -40,4 +40,6 @@ export type Config = {
   gcsKeyFile: string
   gcsProjectId: string
   gcsBucket: string
+  httpLogEnabled: boolean
+  httpLogFormat: string
 }

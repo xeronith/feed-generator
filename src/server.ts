@@ -40,9 +40,13 @@ export class FeedGenerator {
 
   static create(cfg: Config) {
     const app = express()
-    app.use(morgan('combined'))
     app.use(cors())
     app.use(AuthMiddleware)
+
+    if (cfg.httpLogEnabled) {
+      app.use(morgan(cfg.httpLogFormat))
+    }
+
     const db = createDb(cfg.sqliteLocation)
     const cacheDb = new CacheDatabase(cfg)
     const uploader = createUploader(cfg, db)
