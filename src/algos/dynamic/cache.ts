@@ -1,6 +1,6 @@
 import { ExecutorContext, Epoch } from './types'
 
-export const refreshCache = async (
+export const refreshCache = (
   ctx: ExecutorContext,
   result: { uri: string; indexedAt: string; createdAt: string }[],
   local: boolean,
@@ -28,34 +28,38 @@ export const refreshCache = async (
   console.time('-> PUT')
 
   if (local) {
-    await ctx.app.db
-      .insertInto('cache')
-      .values({
-        identifier: ctx.identifier,
-        content: content,
-        refreshedAt: Epoch,
-      })
-      .onConflict((e) =>
-        e.doUpdateSet({
+    ;(async () => {
+      await ctx.app.db
+        .insertInto('cache')
+        .values({
+          identifier: ctx.identifier,
           content: content,
-        }),
-      )
-      .execute()
+          refreshedAt: Epoch,
+        })
+        .onConflict((e) =>
+          e.doUpdateSet({
+            content: content,
+          }),
+        )
+        .execute()
+    })()
   } else {
-    await ctx.app.db
-      .insertInto('cache')
-      .values({
-        identifier: ctx.identifier,
-        content: content,
-        refreshedAt: new Date().toISOString(),
-      })
-      .onConflict((e) =>
-        e.doUpdateSet({
+    ;(async () => {
+      await ctx.app.db
+        .insertInto('cache')
+        .values({
+          identifier: ctx.identifier,
           content: content,
           refreshedAt: new Date().toISOString(),
-        }),
-      )
-      .execute()
+        })
+        .onConflict((e) =>
+          e.doUpdateSet({
+            content: content,
+            refreshedAt: new Date().toISOString(),
+          }),
+        )
+        .execute()
+    })()
   }
 
   console.timeEnd('-> PUT')
