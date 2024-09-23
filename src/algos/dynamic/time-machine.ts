@@ -22,17 +22,25 @@ export const timeMachine = async (
     if (!cache || (cache.refreshedAt ?? Epoch) < cacheTimeout) {
       const queryBuilder = buildQuery(ctx, params)
 
-      console.debug(queryBuilder.log)
-
       console.time('-> BQ')
 
-      const [queryResult] = await ctx.app.bq.query({
-        query: queryBuilder.query,
-        params: queryBuilder.parameters,
-      })
+      const start = process.hrtime()
 
-      result = queryResult
-      refreshCache(ctx, result, false)
+      let errorMessage: string = ''
+      try {
+        const [queryResult] = await ctx.app.bq.query({
+          query: queryBuilder.query,
+          params: queryBuilder.parameters,
+        })
+
+        result = queryResult
+        refreshCache(ctx, result, false)
+      } catch (err) {
+        errorMessage = err.message
+        throw err
+      } finally {
+        queryBuilder.finalize(start, errorMessage)
+      }
 
       console.timeEnd('-> BQ')
     } else {

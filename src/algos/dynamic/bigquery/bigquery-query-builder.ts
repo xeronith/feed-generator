@@ -57,12 +57,39 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   query += ordering
   log += ordering
 
+  const queryLog = log
   log = `# ${ctx.identity.did}\n# ${ctx.identity.handle}\n# ${ctx.identifier}\n\n# ${log}`
   query = `${log}\n\n${query}`
+
+  console.debug(log)
 
   return {
     query: query,
     parameters: authorsParam.concat([values.join(' ')]),
-    log: log,
+    finalize: async (start: [number, number], errorMessage: string) => {
+      const diff = process.hrtime(start)
+      const duration = diff[0] * 1e3 + diff[1] * 1e-6
+
+      try {
+        const timestamp = new Date()
+        await ctx.app.db
+          .insertInto('query_log')
+          .values({
+            feedIdentifier: ctx.identifier,
+            userDid: ctx.identity.did,
+            userHandle: ctx.identity.handle,
+            target: 'BigQuery',
+            query: queryLog,
+            duration: duration,
+            successful: errorMessage ? 0 : 1,
+            errorMessage: errorMessage,
+            timestamp: timestamp.getTime(),
+            createdAt: timestamp.toISOString(),
+          })
+          .execute()
+      } catch (err) {
+        console.error('query log failed', err)
+      }
+    },
   }
 }

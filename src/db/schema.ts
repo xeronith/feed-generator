@@ -3,6 +3,7 @@ export type DatabaseSchema = {
   sub_state: SubState
   feed: Feed
   cache: Cache
+  query_log: QueryLog
 }
 
 export type Post = {
@@ -39,4 +40,17 @@ export type Cache = {
   identifier: string
   content: string
   refreshedAt?: string
+}
+
+export type QueryLog = {
+  feedIdentifier: string
+  userDid: string
+  userHandle: string
+  target: 'BigQuery' | 'Cache'
+  query: string
+  duration: number
+  successful: number
+  errorMessage: string
+  timestamp: number
+  createdAt: string
 }

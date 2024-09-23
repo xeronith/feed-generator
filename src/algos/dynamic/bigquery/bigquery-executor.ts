@@ -17,13 +17,21 @@ export const BigQueryExecutor = async (
     console.time('-> LRT')
 
     await ctx.app.cacheDb.read((connection) => {
-      console.debug(realtimeQueryBuilder.log)
+      const start = process.hrtime()
 
-      const stmt = connection.prepare(realtimeQueryBuilder.query)
-      const realtimeResult = stmt.all(realtimeQueryBuilder.parameters)
+      let errorMessage: string = ''
+      try {
+        const stmt = connection.prepare(realtimeQueryBuilder.query)
+        const realtimeResult = stmt.all(realtimeQueryBuilder.parameters)
 
-      cachedResult = realtimeResult.concat(cachedResult)
-      cachedResult = refreshCache(ctx, cachedResult, true)
+        cachedResult = realtimeResult.concat(cachedResult)
+        cachedResult = refreshCache(ctx, cachedResult, true)
+      } catch (err) {
+        errorMessage = err.message
+        throw err
+      } finally {
+        realtimeQueryBuilder.finalize(start, errorMessage)
+      }
     })
 
     console.timeEnd('-> LRT')

@@ -72,3 +72,73 @@ migrations['003'] = {
     await db.schema.alterTable('post').dropColumn('createdAt').execute()
   },
 }
+
+migrations['004'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('query_log')
+      .addColumn('feedIdentifier', 'varchar(15)', (col) => col.notNull())
+      .addColumn('userDid', 'varchar', (col) => col.notNull())
+      .addColumn('userHandle', 'varchar', (col) => col.notNull())
+      .addColumn('target', 'varchar', (col) => col.notNull())
+      .addColumn('query', 'varchar', (col) => col.notNull())
+      .addColumn('duration', 'integer', (col) => col.notNull())
+      .addColumn('successful', 'integer', (col) => col.notNull())
+      .addColumn('errorMessage', 'varchar', (col) => col.notNull())
+      .addColumn('timestamp', 'integer', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .execute()
+
+    await db.schema
+      .createIndex('feedIdentifierIndex')
+      .on('query_log')
+      .column('feedIdentifier')
+      .execute()
+    await db.schema
+      .createIndex('userDidIndex')
+      .on('query_log')
+      .column('userDid')
+      .execute()
+    await db.schema
+      .createIndex('userHandleIndex')
+      .on('query_log')
+      .column('userHandle')
+      .execute()
+    await db.schema
+      .createIndex('targetIndex')
+      .on('query_log')
+      .column('target')
+      .execute()
+    await db.schema
+      .createIndex('durationIndex')
+      .on('query_log')
+      .column('duration')
+      .execute()
+    await db.schema
+      .createIndex('successfulIndex')
+      .on('query_log')
+      .column('successful')
+      .execute()
+    await db.schema
+      .createIndex('timestampIndex')
+      .on('query_log')
+      .column('timestamp')
+      .execute()
+    await db.schema
+      .createIndex('createdAtIndex')
+      .on('query_log')
+      .column('createdAt')
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    db.schema.dropIndex('feedIdentifierIndex').on('query_log').execute()
+    db.schema.dropIndex('userDidIndex').on('query_log').execute()
+    db.schema.dropIndex('userHandleIndex').on('query_log').execute()
+    db.schema.dropIndex('targetIndex').on('query_log').execute()
+    db.schema.dropIndex('durationIndex').on('query_log').execute()
+    db.schema.dropIndex('successfulIndex').on('query_log').execute()
+    db.schema.dropIndex('timestampIndex').on('query_log').execute()
+    db.schema.dropIndex('createdAtIndex').on('query_log').execute()
+    await db.schema.dropTable('query_log').execute()
+  },
+}
