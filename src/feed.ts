@@ -449,10 +449,10 @@ const makeRouter = (ctx: AppContext) => {
         .values({
           identifier: identifier,
           displayName: payload.displayName?.trim(),
-          description: payload.description?.trim(),
+          description: payload.description?.trim() ?? '',
           definition: JSON.stringify(payload),
           did: did,
-          avatar: payload.avatar.trim(),
+          avatar: payload.avatar?.trim() ?? '',
           pinned: payload.pinned ? 1 : 0,
           favorite: payload.favorite ? 1 : 0,
           type: payload.type ?? '',
