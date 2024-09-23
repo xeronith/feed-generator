@@ -39,7 +39,7 @@ export const BigQueryExecutor = async (
   }
 
   if (cachedResult.length < params.limit) {
-    cachedResult = timeMachine(ctx, params)
+    cachedResult = await timeMachine(ctx, params)
   }
 
   cachedResult = cachedResult.slice(0, params.limit)
