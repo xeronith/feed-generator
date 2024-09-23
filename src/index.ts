@@ -13,9 +13,6 @@ const run = async () => {
     sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? ':memory:',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
     localFirehose: maybeBoolean(process.env.FEEDGEN_LOCAL_FIREHOSE),
-    localRealtimeEnabled: maybeBoolean(
-      process.env.FEEDGEN_LOCAL_REALTIME_ENABLED,
-    ),
     subscriptionEndpoint:
       maybeStr(process.env.FEEDGEN_SUBSCRIPTION_ENDPOINT) ??
       'wss://bsky.network',

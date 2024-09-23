@@ -1,21 +1,16 @@
-import dotenv from 'dotenv'
 import { CronJob } from 'cron'
 import * as path from 'path'
 import { GetFolderSizeInBytes } from '../util/fs'
 import { Slack } from '../util/slack'
 import { Pool, PoolConnection } from 'better-sqlite-pool'
-import { maybeInt } from '../util/helpers'
+import { Config } from '../config'
 
 export class CacheDatabase {
   private writer: Pool
   private reader: Pool
 
-  constructor() {
-    dotenv.config()
-    const location = path.join(
-      path.dirname(process.env.FEEDGEN_SQLITE_LOCATION ?? '.'),
-      'cache.db',
-    )
+  constructor(cfg: Config) {
+    const location = path.join(path.dirname(cfg.sqliteLocation), 'cache.db')
 
     this.writer = new Pool(location)
 
@@ -30,15 +25,14 @@ export class CacheDatabase {
                             USING FTS5("uri", "author", "text", "indexedAt", "createdAt");`)
     })
 
-    const interval = maybeInt(process.env.FEEDGEN_MAX_INTERVAL) ?? 7
     new CronJob(
       '0 0 0 * * *',
       () => {
         this.write((connection) => {
           try {
-            const query = `DELETE FROM "post" WHERE "indexedAt" < DATETIME('now', '-${interval} day')`
+            const query = `DELETE FROM "post" WHERE "indexedAt" < DATETIME('now', '-${cfg.maxInterval} day')`
             connection.exec(query)
-            
+
             console.debug('cache cleanup', query)
           } catch (error) {
             console.error('could not clean cache', error)
@@ -106,7 +100,3 @@ export class CacheDatabase {
     })
   }
 }
-
-const CacheDatabaseInstance = new CacheDatabase()
-
-export default CacheDatabaseInstance

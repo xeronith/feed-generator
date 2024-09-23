@@ -1,6 +1,6 @@
 import express from 'express'
 import { AppContext } from './config'
-import { InProcCache } from './algos/dynamic/inproc-cache'
+import { InProcCache } from './algos/dynamic/cache'
 
 interface RegisterRequestBody {
   identifier: string
@@ -259,6 +259,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('type')
         .select('state')
         .select('createdAt')
+        .select('updatedAt')
         .where('did', '=', req['bsky'].did)
         .where('identifier', '=', identifier)
         .executeTakeFirst()
@@ -283,6 +284,7 @@ const makeRouter = (ctx: AppContext) => {
         type: result.type,
         state: result.state,
         createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
         atUri: `at://${req['bsky'].did}/app.bsky.feed.generator/${result.identifier}`,
       })
     } catch (error) {
@@ -316,6 +318,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('type')
         .select('state')
         .select('createdAt')
+        .select('updatedAt')
         .where('did', '=', req['bsky'].did)
         .where('state', '=', state)
         .orderBy('createdAt', 'desc')
@@ -339,6 +342,7 @@ const makeRouter = (ctx: AppContext) => {
             type: feed.type,
             state: feed.state,
             createdAt: feed.createdAt,
+            updatedAt: feed.updatedAt,
             atUri: `at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}`,
           }
         }),

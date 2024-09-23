@@ -1,11 +1,15 @@
-import { Database } from './db'
 import { HandleResolver, DidResolver } from '@atproto/identity'
+import { BigQuery } from '@google-cloud/bigquery'
+import { Database } from './db'
+import { CacheDatabase } from './db/cache'
 
 export type AppContext = {
-  db: Database
+  cfg: Config
   handleResolver: HandleResolver
   didResolver: DidResolver
-  cfg: Config
+  bq: BigQuery
+  db: Database
+  cacheDb: CacheDatabase
 }
 
 export type Config = {
@@ -18,7 +22,6 @@ export type Config = {
   maxInterval: number
   firehoseEnabled: boolean
   localFirehose: boolean
-  localRealtimeEnabled: boolean
   subscriptionEndpoint: string
   serviceDid: string
   publisherDid: string

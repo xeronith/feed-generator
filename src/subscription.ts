@@ -7,15 +7,20 @@ import { BigQuery, BigQueryOptions } from '@google-cloud/bigquery'
 import { Post } from './db/schema'
 import { Config } from './config'
 import { Database } from './db'
+import { CacheDatabase } from './db/cache'
 import path from 'path'
-import Cache from './db/cache'
 
 let buffer: Post[] = []
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   protected bigquery: BigQuery
 
-  constructor(public db: Database, public cfg: Config, public service: string) {
+  constructor(
+    public db: Database,
+    public cacheDb: CacheDatabase,
+    public cfg: Config,
+    public service: string,
+  ) {
     super(db, service)
 
     const opts: BigQueryOptions = {
@@ -66,14 +71,20 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
       if (this.cfg.localFirehose) {
         if (buffer.length >= 250) {
-          await Cache.write((connection) => {
+          await this.cacheDb.write((connection) => {
             const stmt = connection.prepare(
               'INSERT INTO "post" ("uri", "author", "text", "indexedAt", "createdAt") VALUES (?, ?, ?, ?, ?)',
             )
 
             const transaction = connection.transaction((rows) => {
               for (const row of rows) {
-                stmt.run(row.uri, row.author, row.text, row.indexedAt, row.createdAt)
+                stmt.run(
+                  row.uri,
+                  row.author,
+                  row.text,
+                  row.indexedAt,
+                  row.createdAt,
+                )
               }
             })
 

@@ -4,6 +4,8 @@ import { Identity } from '..'
 
 export const Nothing = { feed: [] }
 
+export const Epoch = '1970-01-01T00:00:00.000Z'
+
 export interface Definition {
   users?: string[]
   authors?: string[]
@@ -12,12 +14,16 @@ export interface Definition {
   search?: string[]
 }
 
+export type ExecutorContext = {
+  app: AppContext
+  identity: Identity
+  identifier: string
+  definition: Definition
+}
+
 export type Executor = (
-  ctx: AppContext,
+  ctx: ExecutorContext,
   params: QueryParams,
-  identity: Identity,
-  identifier: string,
-  definition: Definition,
 ) => Promise<{
   cursor?: string
   feed: { post: any }[]

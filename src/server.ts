@@ -1,18 +1,20 @@
 import http from 'http'
+import path from 'path'
 import events from 'events'
 import express from 'express'
+import cors from 'cors'
+import { BigQuery } from '@google-cloud/bigquery'
 import { HandleResolver, DidResolver, MemoryCache } from '@atproto/identity'
+import { createDb, Database, migrateToLatest } from './db'
+import { FirehoseSubscription } from './subscription'
+import { AppContext, Config } from './config'
+import { AuthMiddleware } from './auth'
+import { CacheDatabase } from './db/cache'
 import { createServer } from './lexicon'
 import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
-import { createDb, Database, migrateToLatest } from './db'
-import Cache from './db/cache'
-import { FirehoseSubscription } from './subscription'
-import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import feed from './feed'
-import { AuthMiddleware } from './auth'
-import cors from 'cors'
 
 export class FeedGenerator {
   public app: express.Application
@@ -38,11 +40,11 @@ export class FeedGenerator {
     app.use(cors())
     app.use(AuthMiddleware)
     const db = createDb(cfg.sqliteLocation)
-    const firehose = new FirehoseSubscription(
-      db,
-      cfg,
-      cfg.subscriptionEndpoint,
-    )
+    const cacheDb = new CacheDatabase(cfg)
+    const bq = new BigQuery({
+      projectId: cfg.bigQueryProjectId,
+      keyFilename: path.resolve(__dirname, cfg.bigQueryKeyFile),
+    })
 
     const didCache = new MemoryCache()
     const handleResolver = new HandleResolver()
@@ -50,6 +52,13 @@ export class FeedGenerator {
       plcUrl: 'https://plc.directory',
       didCache,
     })
+
+    const firehose = new FirehoseSubscription(
+      db,
+      cacheDb,
+      cfg,
+      cfg.subscriptionEndpoint,
+    )
 
     const server = createServer({
       validateResponse: true,
@@ -59,12 +68,16 @@ export class FeedGenerator {
         blobLimit: 5 * 1024 * 1024, // 5mb
       },
     })
+
     const ctx: AppContext = {
-      db,
+      cfg,
       handleResolver,
       didResolver,
-      cfg,
+      bq,
+      db,
+      cacheDb,
     }
+
     feedGeneration(server, ctx)
     describeGenerator(server, ctx)
     app.use(server.xrpc.router)

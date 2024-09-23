@@ -1,7 +1,8 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
-import { SQLiteExecutor } from './sqlite-executor'
-import { BigQueryExecutor } from './bigquery-executor'
+
+import { BigQueryExecutor } from './bigquery/bigquery-executor'
+import { SQLiteExecutor } from './sqlite/sqlite-executor'
 import { Definition, Executor, Nothing } from './types'
 import { Identity } from '..'
 
@@ -89,5 +90,5 @@ export const handler = async (
     executor = BigQueryExecutor
   }
 
-  return executor(ctx, params, identity, identifier, definition)
+  return executor({ app: ctx, identity, identifier, definition }, params)
 }

@@ -1,35 +1,33 @@
-import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import { AppContext } from '../../config'
-import { Definition } from './types'
-import { Identity } from '..'
+import { QueryParams } from '../../../lexicon/types/app/bsky/feed/getFeedSkeleton'
+import { ExecutorContext } from '../types'
 
 export const SQLiteExecutor = async (
-  ctx: AppContext,
+  ctx: ExecutorContext,
   params: QueryParams,
-  identity: Identity,
-  identifier: string,
-  definition: Definition,
 ) => {
-  let builder = ctx.db.selectFrom('post').selectAll()
+  let builder = ctx.app.db.selectFrom('post').selectAll()
 
-  if (Array.isArray(definition.authors) && definition.authors.length > 0) {
-    builder = builder.where('author', 'in', definition.authors)
+  if (
+    Array.isArray(ctx.definition.authors) &&
+    ctx.definition.authors.length > 0
+  ) {
+    builder = builder.where('author', 'in', ctx.definition.authors)
   }
 
-  if (Array.isArray(definition.hashtags)) {
-    definition.hashtags.forEach((hashtag) => {
+  if (Array.isArray(ctx.definition.hashtags)) {
+    ctx.definition.hashtags.forEach((hashtag) => {
       builder = builder.where('text', 'like', `%${hashtag}%`)
     })
   }
 
-  if (Array.isArray(definition.mentions)) {
-    definition.mentions.forEach((mention) => {
+  if (Array.isArray(ctx.definition.mentions)) {
+    ctx.definition.mentions.forEach((mention) => {
       builder = builder.where('text', 'like', `%${mention}%`)
     })
   }
 
-  if (Array.isArray(definition.search)) {
-    definition.search.forEach((criteria) => {
+  if (Array.isArray(ctx.definition.search)) {
+    ctx.definition.search.forEach((criteria) => {
       builder = builder.where('text', 'like', `%${criteria}%`)
     })
   }
