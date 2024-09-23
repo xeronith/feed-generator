@@ -32,7 +32,7 @@ export const timeMachine = async (
       })
 
       result = queryResult
-      refreshCache(ctx, result, false)
+      await refreshCache(ctx, result, false)
 
       console.timeEnd('-> BQ')
     } else {

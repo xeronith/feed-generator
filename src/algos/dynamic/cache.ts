@@ -1,6 +1,6 @@
 import { ExecutorContext, Epoch } from './types'
 
-export const refreshCache = (
+export const refreshCache = async (
   ctx: ExecutorContext,
   result: { uri: string; indexedAt: string; createdAt: string }[],
   local: boolean,
@@ -28,7 +28,7 @@ export const refreshCache = (
   console.time('-> PUT')
 
   if (local) {
-    ctx.app.db
+    await ctx.app.db
       .insertInto('cache')
       .values({
         identifier: ctx.identifier,
@@ -42,7 +42,7 @@ export const refreshCache = (
       )
       .execute()
   } else {
-    ctx.app.db
+    await ctx.app.db
       .insertInto('cache')
       .values({
         identifier: ctx.identifier,
