@@ -1,4 +1,3 @@
-import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
 import { Identity } from '..'
 
@@ -20,11 +19,3 @@ export type ExecutorContext = {
   identifier: string
   definition: Definition
 }
-
-export type Executor = (
-  ctx: ExecutorContext,
-  params: QueryParams,
-) => Promise<{
-  cursor?: string
-  feed: { post: any }[]
-}>

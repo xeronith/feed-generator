@@ -1,5 +1,5 @@
-import { QueryParams } from '../../../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import { ExecutorContext } from '../types'
+import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
+import { ExecutorContext } from './types'
 
 export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE "rowid" > 0`,

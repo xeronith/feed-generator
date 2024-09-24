@@ -1,5 +1,5 @@
-import { QueryParams } from '../../../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import { ExecutorContext } from '../types'
+import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
+import { ExecutorContext } from './types'
 
 export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   let interval = `TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${ctx.app.cfg.maxInterval} DAY)`

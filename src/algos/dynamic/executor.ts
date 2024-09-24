@@ -1,13 +1,10 @@
-import { QueryParams } from '../../../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import { ExecutorContext } from '../types'
-import { buildQuery } from '../sqlite/sqlite-query-builder'
-import { timeMachine } from '../time-machine'
-import { InProcCache, refreshCache } from '../cache'
+import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
+import { ExecutorContext } from './types'
+import { buildQuery } from './sqlite-query-builder'
+import { timeMachine } from './time-machine'
+import { InProcCache, refreshCache } from './cache'
 
-export const BigQueryExecutor = async (
-  ctx: ExecutorContext,
-  params: QueryParams,
-) => {
+export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
   console.time('-> EXEC')
 
   let cachedResult: any[] = InProcCache[ctx.identifier]?.content ?? []
@@ -46,7 +43,7 @@ export const BigQueryExecutor = async (
     })
   }
 
-  if (cachedResult.length < params.limit) {
+  if (ctx.app.cfg.bigQueryEnabled && cachedResult.length < params.limit) {
     cachedResult = await timeMachine(ctx, params)
   }
 

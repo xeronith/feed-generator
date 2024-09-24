@@ -1,9 +1,8 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
 
-import { BigQueryExecutor } from './bigquery/bigquery-executor'
-import { SQLiteExecutor } from './sqlite/sqlite-executor'
-import { Definition, Executor, Nothing } from './types'
+import { execute } from './executor'
+import { Definition, Nothing } from './types'
 import { Identity } from '..'
 
 export const shortname = 'dynamic'
@@ -85,10 +84,5 @@ export const handler = async (
   definition.mentions = mentions
   definition.search = search
 
-  let executor: Executor = SQLiteExecutor
-  if (ctx.cfg.bigQueryEnabled) {
-    executor = BigQueryExecutor
-  }
-
-  return executor({ app: ctx, identity, identifier, definition }, params)
+  return execute({ app: ctx, identity, identifier, definition }, params)
 }

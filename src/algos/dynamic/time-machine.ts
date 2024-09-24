@@ -1,6 +1,6 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { InProcCache, refreshCache } from './cache'
-import { buildQuery } from './bigquery/bigquery-query-builder'
+import { buildQuery } from './bigquery-query-builder'
 import { Epoch, ExecutorContext } from './types'
 
 export const timeMachine = async (
