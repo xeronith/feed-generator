@@ -26,7 +26,7 @@ const run = async () => {
     protocol: maybeStr(process.env.FEEDGEN_PROTOCOL) ?? 'https',
     hostname,
     serviceDid,
-    bigQueryEnabled: process.env.BIGQUERY_KEY_FILE ? true : false,
+    bigQueryEnabled: maybeBoolean(process.env.BIGQUERY_ENABLED),
     bigQueryKeyFile: maybeStr(process.env.BIGQUERY_KEY_FILE) ?? '',
     bigQueryProjectId: maybeStr(process.env.BIGQUERY_PROJECT_ID) ?? '',
     bigQueryDatasetId: maybeStr(process.env.BIGQUERY_DATASET_ID) ?? '',
