@@ -45,7 +45,7 @@ export class CacheDatabase {
     )
 
     new CronJob(
-      '0 */10 * * * *',
+      '0 */30 * * * *',
       async () => {
         this.read(async (connection) => {
           try {
