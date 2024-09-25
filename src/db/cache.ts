@@ -20,7 +20,7 @@ export class CacheDatabase {
     })
 
     this.write((connection) => {
-      connection.exec(`CREATE TABLE IF NOT EXISTS "config" ("limit" INTEGER);`)
+      connection.exec(`CREATE TABLE IF NOT EXISTS "config" ("limit" INTEGER) STRICT;`)
       connection.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS "post" 
                             USING FTS5("uri", "author", "text", "indexedAt", "createdAt");`)
     })
