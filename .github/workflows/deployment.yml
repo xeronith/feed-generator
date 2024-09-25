@@ -1,0 +1,45 @@
+name: Deployment Workflow
+
+on:
+  push:
+    branches: ['develop']
+  pull_request:
+    branches: ['develop']
+
+env:
+  APP_NAME: robinfeed
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} > ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          zip -r dist.zip dist/
+          scp dist.zip package.json package-lock.json ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/${{ env.APP_NAME }}
+
+      - name: Run
+        run: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "~/${{ env.APP_NAME }}/deploy.sh"
