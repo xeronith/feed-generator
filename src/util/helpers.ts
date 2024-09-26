@@ -14,3 +14,12 @@ export const maybeInt = (val?: string) => {
   if (isNaN(int)) return undefined
   return int
 }
+
+export const isValidJson = (input: string): boolean => {
+  try {
+    JSON.parse(input)
+    return true
+  } catch (e) {
+    return false
+  }
+}

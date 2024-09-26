@@ -4,6 +4,7 @@ export type DatabaseSchema = {
   feed: Feed
   cache: Cache
   query_log: QueryLog
+  user_log: UserLog
 }
 
 export type Post = {
@@ -51,6 +52,15 @@ export type QueryLog = {
   duration: number
   successful: number
   errorMessage: string
+  timestamp: number
+  createdAt: string
+}
+
+export type UserLog = {
+  userDid: string
+  userHandle: string
+  activity: string
+  content: string
   timestamp: number
   createdAt: string
 }

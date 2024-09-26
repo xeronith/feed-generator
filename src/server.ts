@@ -17,6 +17,7 @@ import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import wellKnown from './well-known'
 import feed from './feed'
+import log from './log'
 import { createUploader } from './uploader'
 
 export class FeedGenerator {
@@ -101,6 +102,7 @@ export class FeedGenerator {
     app.use(wellKnown(ctx))
     app.use(express.json())
     app.use(feed(ctx))
+    app.use(log(ctx))
 
     return new FeedGenerator(app, db, firehose, cfg)
   }

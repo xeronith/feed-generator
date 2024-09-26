@@ -142,3 +142,52 @@ migrations['004'] = {
     await db.schema.dropTable('query_log').execute()
   },
 }
+
+migrations['005'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('user_log')
+      .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
+      .addColumn('userDid', 'varchar', (col) => col.notNull())
+      .addColumn('userHandle', 'varchar', (col) => col.notNull())
+      .addColumn('activity', 'varchar', (col) => col.notNull())
+      .addColumn('content', 'text', (col) => col.notNull())
+      .addColumn('timestamp', 'integer', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .execute()
+
+    await db.schema
+      .createIndex('userLog_userDidIndex')
+      .on('user_log')
+      .column('userDid')
+      .execute()
+    await db.schema
+      .createIndex('userLog_userHandleIndex')
+      .on('user_log')
+      .column('userHandle')
+      .execute()
+    await db.schema
+      .createIndex('userLog_activityIndex')
+      .on('user_log')
+      .column('activity')
+      .execute()
+    await db.schema
+      .createIndex('userLog_timestampIndex')
+      .on('user_log')
+      .column('timestamp')
+      .execute()
+    await db.schema
+      .createIndex('userLog_createdAtIndex')
+      .on('user_log')
+      .column('createdAt')
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    db.schema.dropIndex('userLog_userDidIndex').on('user_log').execute()
+    db.schema.dropIndex('userLog_userHandleIndex').on('user_log').execute()
+    db.schema.dropIndex('userLog_activityIndex').on('user_log').execute()
+    db.schema.dropIndex('userLog_timestampIndex').on('user_log').execute()
+    db.schema.dropIndex('userLog_createdAtIndex').on('user_log').execute()
+    await db.schema.dropTable('user_log').execute()
+  },
+}

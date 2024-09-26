@@ -31,7 +31,9 @@ const run = async () => {
     'Authorization'
   ] = `Bearer ${loginResponse.data.accessJwt}`
 
-  const feedEndpoint = 'http://localhost:3000/feed'
+  const host = 'http://localhost:3000'
+
+  const feedEndpoint = `${host}/feed`
   const feedIdentifier = 'astronomy-feed'
 
   // delete feed
@@ -132,6 +134,19 @@ const run = async () => {
     const getFeedResponse = await axios.get(`${feedEndpoint}?state=published`)
     console.log(getFeedResponse.data)
   }
+
+  const logEndpoint = `${host}/log`
+
+  // post user log
+  await axios.post(`${logEndpoint}/user`, {
+    activity: 'registration',
+    content: {
+      // You can add your custom data:
+      // client: 'Web',
+      // clientTimestamp: new Date().toISOString(),
+      // ...
+    },
+  })
 }
 
 run()
