@@ -12,6 +12,7 @@ const run = async () => {
     port: maybeInt(process.env.FEEDGEN_PORT) ?? 3000,
     listenhost: maybeStr(process.env.FEEDGEN_LISTENHOST) ?? 'localhost',
     sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? ':memory:',
+    sqliteReplicaLocation: maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? ':memory:',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
     localFirehose: maybeBoolean(process.env.FEEDGEN_LOCAL_FIREHOSE),
     subscriptionEndpoint:

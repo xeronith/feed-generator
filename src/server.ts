@@ -7,7 +7,7 @@ import morgan from 'morgan'
 import { Storage } from '@google-cloud/storage'
 import { BigQuery } from '@google-cloud/bigquery'
 import { HandleResolver, DidResolver, MemoryCache } from '@atproto/identity'
-import { createDb, Database, migrateToLatest } from './db'
+import { ApplicationDatabase } from './db'
 import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import { AuthMiddleware } from './auth'
@@ -23,13 +23,13 @@ import { createUploader } from './uploader'
 export class FeedGenerator {
   public app: express.Application
   public server?: http.Server
-  public db: Database
+  private db: ApplicationDatabase
   public firehose: FirehoseSubscription
   public cfg: Config
 
   constructor(
     app: express.Application,
-    db: Database,
+    db: ApplicationDatabase,
     firehose: FirehoseSubscription,
     cfg: Config,
   ) {
@@ -48,9 +48,9 @@ export class FeedGenerator {
       app.use(morgan(cfg.httpLogFormat))
     }
 
-    const db = createDb(cfg.sqliteLocation)
+    const db = new ApplicationDatabase(cfg)
     const cacheDb = new CacheDatabase(cfg)
-    const uploader = createUploader(cfg, db)
+    const uploader = createUploader(cfg, db.get())
 
     const bq = new BigQuery({
       projectId: cfg.bigQueryProjectId,
@@ -70,7 +70,7 @@ export class FeedGenerator {
     })
 
     const firehose = new FirehoseSubscription(
-      db,
+      db.get(),
       cacheDb,
       cfg,
       cfg.subscriptionEndpoint,
@@ -86,14 +86,14 @@ export class FeedGenerator {
     })
 
     const ctx: AppContext = {
-      cfg,
-      handleResolver,
-      didResolver,
-      storage,
-      bq,
-      db,
-      cacheDb,
-      uploader,
+      cfg: cfg,
+      handleResolver: handleResolver,
+      didResolver: didResolver,
+      storage: storage,
+      bq: bq,
+      db: db.get(),
+      cacheDb: cacheDb,
+      uploader: uploader,
     }
 
     feedGeneration(server, ctx)
@@ -108,10 +108,11 @@ export class FeedGenerator {
   }
 
   async start(): Promise<http.Server> {
-    await migrateToLatest(this.db)
+    await this.db.migrateToLatest()
     if (this.cfg.firehoseEnabled) {
       this.firehose.run(this.cfg.subscriptionReconnectDelay)
     }
+
     this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)
     await events.once(this.server, 'listening')
     return this.server

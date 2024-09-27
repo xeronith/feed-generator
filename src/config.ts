@@ -22,6 +22,7 @@ export type Config = {
   protocol: string
   hostname: string
   sqliteLocation: string
+  sqliteReplicaLocation: string
   cacheTimeout: number
   maxInterval: number
   firehoseEnabled: boolean
