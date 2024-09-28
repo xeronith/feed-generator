@@ -24,6 +24,8 @@ export type Config = {
   sqliteLocation: string
   sqliteReplicaLocation: string
   cacheTimeout: number
+  cacheCleanupInterval: number
+  cacheCleanupPageSize: number
   maxInterval: number
   firehoseEnabled: boolean
   localFirehose: boolean

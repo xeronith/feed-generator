@@ -1,5 +1,6 @@
-import { CronJob } from 'cron'
 import * as path from 'path'
+import moment from 'moment'
+import { CronJob } from 'cron'
 import { GetFolderSizeInBytes } from '../util/fs'
 import { Slack } from '../util/slack'
 import { Pool, PoolConnection } from 'better-sqlite-pool'
@@ -26,14 +27,34 @@ export class CacheDatabase {
     })
 
     new CronJob(
-      '0 0 0 * * *',
+      `0/${cfg.cacheCleanupInterval} * * * * *`,
       () => {
         this.write((connection) => {
           try {
-            const query = `DELETE FROM "post" WHERE "indexedAt" < DATETIME('now', '-${cfg.maxInterval} day')`
-            connection.exec(query)
+            const mark = moment()
+              .subtract(cfg.maxInterval, 'days')
+              .format('YYYY-MM-DDTHH')
 
-            console.debug('cache cleanup', query)
+            let query = `SELECT "rowid" FROM "post" WHERE "indexedAt" MATCH '"${mark}"' ORDER BY "rowid" DESC LIMIT 1;`
+            console.log(`cache check:`, query)
+            const result: any = connection.prepare(query).pluck().get()
+
+            if (result) {
+              const limit = cfg.cacheCleanupPageSize
+              const maxId = result
+              const minId = maxId - limit
+
+              query = `DELETE FROM "post" where rowid <= ${maxId} and rowid > ${minId};`
+              console.debug('cache cleanup attempt:', query)
+
+              connection.transaction(() => {
+                connection.exec(query)
+              })()
+
+              console.debug('cache cleanup success:', query)
+            } else {
+              console.debug('cache tidy:', mark)
+            }
           } catch (error) {
             console.error('could not clean cache', error)
           }
