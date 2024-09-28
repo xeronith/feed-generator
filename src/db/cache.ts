@@ -26,6 +26,8 @@ export class CacheDatabase {
                             USING FTS5("uri", "author", "text", "indexedAt", "createdAt");`)
     })
 
+    let tidy: Record<string, boolean> = {}
+
     new CronJob(
       `0/${cfg.cacheCleanupInterval} * * * * *`,
       () => {
@@ -35,8 +37,12 @@ export class CacheDatabase {
               .subtract(cfg.maxInterval, 'days')
               .format('YYYY-MM-DDTHH')
 
+            if (tidy[mark]) {
+              return
+            }
+
             let query = `SELECT "rowid" FROM "post" WHERE "indexedAt" MATCH '"${mark}"' ORDER BY "rowid" DESC LIMIT 1;`
-            console.log(`cache check:`, query)
+            console.debug(`cache check:`, query)
             const result: any = connection.prepare(query).pluck().get()
 
             if (result) {
@@ -53,6 +59,9 @@ export class CacheDatabase {
 
               console.debug('cache cleanup success:', query)
             } else {
+              tidy = {}
+              tidy[mark] = true
+              
               console.debug('cache tidy:', mark)
             }
           } catch (error) {
