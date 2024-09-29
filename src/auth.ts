@@ -31,7 +31,7 @@ const tokenCache: Record<
 > = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
 
-const includedRoutes = ['/feed', '/log']
+const excludedRoutes = ['/xrpc/app.bsky.feed.getFeedSkeleton', '/.well-known/did.json']
 
 export async function AuthMiddleware(
   req: Request,
@@ -41,21 +41,7 @@ export async function AuthMiddleware(
   const authHeader = req.headers['authorization']
 
   if (!authHeader) {
-    let protectedPath = false
-    for (let i = 0; i < includedRoutes.length; i++) {
-      if (req.path.startsWith(includedRoutes[i])) {
-        protectedPath = true
-        break
-      }
-    }
-
-    if (!protectedPath) {
-      req['bsky'] = {
-        did: 'n/a',
-        handle: 'n/a',
-        email: 'n/a',
-      }
-
+    if (excludedRoutes.includes(req.path)) {
       return next()
     }
 
@@ -93,9 +79,9 @@ export async function AuthMiddleware(
       }
 
       tokenCache[token] = {
-        did: result.data?.did ?? 'n/a',
-        handle: result.data?.handle ?? 'n/a',
-        email: result.data?.email ?? 'n/a',
+        did: result.data.did,
+        handle: result.data.handle,
+        email: result.data.email ?? 'n/a',
         expiry: Date.now() + CACHE_EXPIRY_MS,
       }
 
@@ -106,8 +92,7 @@ export async function AuthMiddleware(
       }
 
       return next()
-    } catch (err) {
-      console.debug(req.path, err)
+    } catch (error) {
       return res.status(401).json({ error: 'invalid token' })
     }
   }
