@@ -81,9 +81,9 @@ export async function AuthMiddleware(
       }
 
       tokenCache[token] = {
-        did: result.data.did,
-        handle: result.data.handle,
-        email: result.data.email ?? 'n/a',
+        did: result.data?.did ?? 'n/a',
+        handle: result.data?.handle ?? 'n/a',
+        email: result.data?.email ?? 'n/a',
         expiry: Date.now() + CACHE_EXPIRY_MS,
       }
 
