@@ -31,7 +31,7 @@ const tokenCache: Record<
 > = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
 
-const excludedRoutes = ['/xrpc', '/.well-known']
+const includedRoutes = ['/feed', '/log']
 
 export async function AuthMiddleware(
   req: Request,
@@ -41,10 +41,21 @@ export async function AuthMiddleware(
   const authHeader = req.headers['authorization']
 
   if (!authHeader) {
-    for (let i = 0; i < excludedRoutes.length; i++) {
-      if (req.path.startsWith(excludedRoutes[i])) {
-        return next()
+    let protectedPath = false
+    for (let i = 0; i < includedRoutes.length; i++) {
+      if (req.path.startsWith(includedRoutes[i])) {
+        protectedPath = true
       }
+    }
+
+    if (!protectedPath) {
+      req['bsky'] = {
+        did: 'n/a',
+        handle: 'n/a',
+        email: 'n/a',
+      }
+
+      next()
     }
 
     return res.status(401).json({
