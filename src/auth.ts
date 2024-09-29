@@ -42,29 +42,18 @@ export async function AuthMiddleware(
   res: Response,
   next: NextFunction,
 ) {
-  const authHeader = req.headers['authorization']
-  if (authHeader) {
-    const token = authHeader.split(' ')[1]
-    try {
-      const decodedToken = jwt.decode(token, { complete: true })
-      console.debug(decodedToken)
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
   if (excludedRoutes.includes(req.path)) {
     return next()
   }
 
+  const authHeader = req.headers['authorization']
   if (!authHeader) {
     return res.status(401).json({
       error: 'authorization header missing',
     })
-  }
+  } 
 
   const token = authHeader.split(' ')[1]
-
   if (!token) {
     return res
       .status(401)
