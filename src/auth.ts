@@ -45,6 +45,7 @@ export async function AuthMiddleware(
     for (let i = 0; i < includedRoutes.length; i++) {
       if (req.path.startsWith(includedRoutes[i])) {
         protectedPath = true
+        break
       }
     }
 
@@ -55,7 +56,7 @@ export async function AuthMiddleware(
         email: 'n/a',
       }
 
-      next()
+      return next()
     }
 
     return res.status(401).json({
