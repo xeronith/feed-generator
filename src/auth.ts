@@ -46,7 +46,7 @@ export async function AuthMiddleware(
   if (authHeader) {
     const token = authHeader.split(' ')[1]
     try {
-      const decodedToken = jwt.decode(token)
+      const decodedToken = jwt.decode(token, { complete: true })
       console.debug(decodedToken)
     } catch (err) {
       console.error(err)
