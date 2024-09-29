@@ -31,7 +31,7 @@ const tokenCache: Record<
 > = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
 
-const excludedRoutes = ['/xrpc']
+const excludedRoutes = ['/xrpc', '/.well-known']
 
 export async function AuthMiddleware(
   req: Request,
@@ -41,8 +41,10 @@ export async function AuthMiddleware(
   const authHeader = req.headers['authorization']
 
   if (!authHeader) {
-    if (excludedRoutes.includes(req.path)) {
-      return next()
+    for (let i = 0; i < excludedRoutes.length; i++) {
+      if (req.path.startsWith(excludedRoutes[i])) {
+        return next()
+      }
     }
 
     return res.status(401).json({
