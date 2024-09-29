@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
 import {
   verifyJwt,
   AuthRequiredError,
@@ -69,6 +70,13 @@ export async function AuthMiddleware(
 
     return next()
   } else {
+    try {
+      const decodedToken = jwt.decode(token)
+      console.debug(decodedToken)
+    } catch (err) {
+      console.error(err)
+    }
+    
     try {
       const result = await agent.com.atproto.server.getSession(
         {},
