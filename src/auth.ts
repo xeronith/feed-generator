@@ -82,7 +82,6 @@ export async function AuthMiddleware(
     return next()
   } else {
     try {
-      console.debug(authHeader)
       const result = await agent.com.atproto.server.getSession(
         {},
         { headers: { Authorization: authHeader } },
@@ -108,7 +107,7 @@ export async function AuthMiddleware(
 
       return next()
     } catch (err) {
-      console.debug(err)
+      console.debug(req.path, err)
       return res.status(401).json({ error: 'invalid token' })
     }
   }
