@@ -42,11 +42,21 @@ export async function AuthMiddleware(
   res: Response,
   next: NextFunction,
 ) {
+  const authHeader = req.headers['authorization']
+  if (authHeader) {
+    const token = authHeader.split(' ')[1]
+    try {
+      const decodedToken = jwt.decode(token)
+      console.debug(decodedToken)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   if (excludedRoutes.includes(req.path)) {
     return next()
   }
 
-  const authHeader = req.headers['authorization']
   if (!authHeader) {
     return res.status(401).json({
       error: 'authorization header missing',
@@ -70,13 +80,6 @@ export async function AuthMiddleware(
 
     return next()
   } else {
-    try {
-      const decodedToken = jwt.decode(token)
-      console.debug(decodedToken)
-    } catch (err) {
-      console.error(err)
-    }
-    
     try {
       const result = await agent.com.atproto.server.getSession(
         {},
