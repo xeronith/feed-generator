@@ -31,20 +31,22 @@ const tokenCache: Record<
 > = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
 
-const excludedRoutes = ['/xrpc/app.bsky.feed.getFeedSkeleton', '/.well-known/did.json']
+const excludedRoutes = [
+  '/xrpc/app.bsky.feed.getFeedSkeleton',
+  '/.well-known/did.json',
+]
 
 export async function AuthMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
+  if (excludedRoutes.includes(req.path)) {
+    return next()
+  }
+
   const authHeader = req.headers['authorization']
-
   if (!authHeader) {
-    if (excludedRoutes.includes(req.path)) {
-      return next()
-    }
-
     return res.status(401).json({
       error: 'authorization header missing',
     })
