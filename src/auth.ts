@@ -31,7 +31,7 @@ const tokenCache: Record<
 > = {}
 const CACHE_EXPIRY_MS = 30 * 60 * 1000
 
-const excludedRoutes = ['/xrpc/app.bsky.feed.getFeedSkeleton']
+const excludedRoutes = ['/xrpc']
 
 export async function AuthMiddleware(
   req: Request,
