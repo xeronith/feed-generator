@@ -121,7 +121,6 @@ export class CacheDatabase {
       try {
         connection.pragma('journal_mode = WAL')
         connection.pragma('synchronous = NORMAL')
-        connection.pragma('cache_size = -20480')
 
         callback(connection)
       } finally {
