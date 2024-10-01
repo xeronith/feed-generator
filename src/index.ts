@@ -27,6 +27,7 @@ const run = async () => {
     maxInterval: maybeInt(process.env.FEEDGEN_MAX_INTERVAL) ?? 7,
     cacheCleanupInterval: maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_INTERVAL) ?? 30,
     cacheCleanupPageSize: maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_PAGE_SIZE) ?? 10000,
+    cacheDiggingDepth: maybeInt(process.env.FEEDGEN_CACHE_DIGGING_DEPTH) ?? 5000,
     protocol: maybeStr(process.env.FEEDGEN_PROTOCOL) ?? 'https',
     hostname,
     serviceDid,

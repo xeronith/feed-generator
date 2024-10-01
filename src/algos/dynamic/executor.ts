@@ -22,6 +22,30 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
         const realtimeResult = stmt.all(realtimeQueryBuilder.parameters)
 
         cachedResult = realtimeResult.concat(cachedResult)
+        
+        console.time('-> EXACT')
+        
+        const exacts: string[] = []
+        if (Array.isArray(ctx.definition.mentions)) {
+          ctx.definition.mentions.forEach((e) => exacts.push(e.toUpperCase()))
+        }
+
+        if (Array.isArray(ctx.definition.hashtags)) {
+          ctx.definition.hashtags.forEach((e) => exacts.push(e.toUpperCase()))
+        }
+
+        cachedResult = cachedResult.filter((row) => {
+          for (let i = 0; i < exacts.length; i++) {
+            if (row.text.toUpperCase().indexOf(exacts[i]) < 0) {
+              return false
+            }
+          }
+
+          return true
+        })
+        
+        console.timeEnd('-> EXACT')
+        
         cachedResult = refreshCache(ctx, cachedResult, true)
       } catch (err) {
         errorMessage = err.message

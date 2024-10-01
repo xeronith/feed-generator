@@ -24,6 +24,7 @@ export type Config = {
   sqliteLocation: string
   sqliteReplicaLocation: string
   cacheTimeout: number
+  cacheDiggingDepth: number
   cacheCleanupInterval: number
   cacheCleanupPageSize: number
   maxInterval: number

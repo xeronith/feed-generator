@@ -36,18 +36,13 @@ export default function (server: Server, ctx: AppContext) {
      * )
      */
 
-    const start = process.hrtime()
     const body = await algo(
       ctx,
       params,
       req['bsky'] ?? { did: 'anonymous', handle: 'n/a', email: '' },
     )
 
-    const diff = process.hrtime(start)
-    const duration = diff[0] * 1e3 + diff[1] * 1e-6
-
     return {
-      headers: { 'Server-Timing': `Total;dur=${duration.toFixed(2)}` },
       encoding: 'application/json',
       body: body,
     }

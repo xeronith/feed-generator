@@ -2,7 +2,7 @@ import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { ExecutorContext } from './types'
 
 export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
-  let query = `SELECT "uri", "indexedAt", "createdAt" FROM "post" WHERE "rowid" > 0`,
+  let query = `SELECT "uri", "text", "indexedAt", "createdAt" FROM "post" WHERE "rowid" > 0`,
     log = query
 
   const authors: string[] = [],
@@ -38,10 +38,8 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   }
 
   let ordering = ` ORDER BY "rowid" DESC`
-  ordering += ` LIMIT ${params.limit ?? 100};`
-
-  query += ordering
-  log += ordering
+  query += ordering + ` LIMIT ${ctx.app.cfg.cacheDiggingDepth};`
+  log += ordering + ` LIMIT ${params.limit ?? ctx.app.cfg.cacheDiggingDepth};`
 
   const queryLog = log
   log = `# ${ctx.identity.did}\n# ${ctx.identity.handle}\n# ${ctx.identifier}\n\n# ${log}`
