@@ -161,7 +161,7 @@ const makeRouter = (ctx: AppContext) => {
       }
 
       if ('state' in payload) {
-        if (payload.state && !allowedStates.includes(payload.state)) {
+        if (!allowedStates.includes(payload.state ?? '')) {
           return res.status(400).json({
             error: 'invalid state',
           })
@@ -431,8 +431,7 @@ const makeRouter = (ctx: AppContext) => {
 
     if (
       'state' in payload &&
-      payload.state &&
-      !allowedStates.includes(payload.state)
+      !allowedStates.includes(payload.state ?? '')
     ) {
       return res.status(400).json({
         error: 'invalid state',
