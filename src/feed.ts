@@ -379,7 +379,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('createdAt')
         .select('updatedAt')
         .where('did', '=', req['bsky'].did)
-        .where('state', '=', state)
+        // .where('state', '=', state)
         .orderBy('createdAt', 'desc')
         .execute()
 
