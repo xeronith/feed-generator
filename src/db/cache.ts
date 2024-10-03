@@ -2,7 +2,7 @@ import * as path from 'path'
 import moment from 'moment'
 import { CronJob } from 'cron'
 import { GetFolderSizeInBytes } from '../util/fs'
-import { Slack } from '../util/slack'
+import { Telegram } from '../util/telegram'
 import { Pool, PoolConnection } from 'better-sqlite-pool'
 import { Config } from '../config'
 
@@ -91,7 +91,7 @@ export class CacheDatabase {
             if (size < limit) return
 
             const sizeInGb = (size / (1024 * 1024 * 1024)).toFixed(2)
-            Slack.send(`🚨 Firehose Cache: ${sizeInGb}GB`)
+            Telegram.send(`🚨 Firehose Cache: ${sizeInGb}GB`)
           } catch (error) {
             console.error('could not calculate cache size', error)
           }

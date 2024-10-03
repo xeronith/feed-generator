@@ -4,7 +4,7 @@ import { Database as SqliteDatabase } from 'better-sqlite3'
 import { Config } from '../config'
 import { DatabaseSchema } from './schema'
 import { migrationProvider } from './migrations'
-import { Slack } from '../util/slack'
+import { Telegram } from '../util/telegram'
 
 export class ApplicationDatabase {
   private master: Database
@@ -30,7 +30,7 @@ export class ApplicationDatabase {
       } catch (err) {
         const alert = `replication failed\n${err}\n${JSON.stringify(event)}`
         console.log(alert)
-        Slack.send(alert)
+        Telegram.send(alert)
       }
     }
 

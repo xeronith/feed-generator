@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import FeedGenerator from './server'
 import { maybeStr, maybeInt, maybeBoolean } from './util/helpers'
-import { Slack } from './util/slack'
+import { Telegram } from './util/telegram'
 
 const run = async () => {
   dotenv.config()
@@ -54,7 +54,7 @@ const run = async () => {
   const banner = `🤖 running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}`
   console.log(banner)
 
-  Slack.send(banner)
+  Telegram.send(banner)
 }
 
 run()
