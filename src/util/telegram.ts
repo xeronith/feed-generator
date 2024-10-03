@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import TelegramBotAPI  from 'node-telegram-bot-api'
+import TelegramBotAPI from 'node-telegram-bot-api'
 
 class TelegramBot {
   private bot: TelegramBotAPI
@@ -8,7 +8,7 @@ class TelegramBot {
 
   constructor() {
     dotenv.config()
-    
+
     this.token = process.env.TELEGRAM_BOT_TOKEN ?? ''
     this.chatId = process.env.TELEGRAM_CHAT_ID ?? ''
 
@@ -16,7 +16,7 @@ class TelegramBot {
   }
 
   public async send(message: string) {
-    if (!this.token) return
+    if (!this.token || !this.chatId) return
     return this.bot.sendMessage(this.chatId, message)
   }
 }

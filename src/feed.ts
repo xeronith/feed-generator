@@ -240,21 +240,21 @@ const makeRouter = (ctx: AppContext) => {
         builder = builder.set({
           updatedAt: new Date().toISOString(),
         })
-      }
 
-      builder = builder
-        .where('identifier', '=', identifier)
-        .where('did', '=', req['bsky'].did)
-
-      await builder.execute()
-
-      if (cacheInvalidated) {
-        await ctx.db
-          .deleteFrom('cache')
+        builder = builder
           .where('identifier', '=', identifier)
-          .execute()
+          .where('did', '=', req['bsky'].did)
 
-        delete InProcCache[identifier]
+        await builder.execute()
+
+        if (cacheInvalidated) {
+          await ctx.db
+            .deleteFrom('cache')
+            .where('identifier', '=', identifier)
+            .execute()
+
+          delete InProcCache[identifier]
+        }
       }
     } catch (error) {
       return res.status(500).json({
@@ -429,10 +429,7 @@ const makeRouter = (ctx: AppContext) => {
       })
     }
 
-    if (
-      'state' in payload &&
-      !allowedStates.includes(payload.state ?? '')
-    ) {
+    if ('state' in payload && !allowedStates.includes(payload.state ?? '')) {
       return res.status(400).json({
         error: 'invalid state',
       })

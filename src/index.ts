@@ -51,7 +51,7 @@ const run = async () => {
   const server = FeedGenerator.create(cfg)
   await server.start()
 
-  const banner = `🤖 running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}`
+  const banner = `🤖 Running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}`
   console.log(banner)
 
   Telegram.send(banner)
