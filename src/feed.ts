@@ -8,7 +8,7 @@ interface RegisterRequestBody {
   description: string
   avatar: string
   pinned?: boolean
-  favorite?: boolean
+  bookmark?: boolean
   type?: string
   state?: string
   users: string[]
@@ -22,7 +22,7 @@ interface UpdateStateRequestBody {
   description?: string
   avatar?: string
   pinned?: boolean
-  favorite?: boolean
+  bookmark?: boolean
   type?: string
   state?: string
   users: string[]
@@ -186,12 +186,12 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
-      if ('favorite' in payload) {
+      if ('bookmark' in payload) {
         modified++
 
-        definition.favorite = payload.favorite ? 1 : 0
+        definition.bookmark = payload.bookmark ? 1 : 0
         builder = builder.set({
-          favorite: definition.favorite,
+          bookmark: definition.bookmark,
           definition: JSON.stringify(definition),
         })
       }
@@ -314,7 +314,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('definition')
         .select('avatar')
         .select('pinned')
-        .select('favorite')
+        .select('bookmark')
         .select('type')
         .select('state')
         .select('createdAt')
@@ -339,7 +339,7 @@ const makeRouter = (ctx: AppContext) => {
         mentions: definition.mentions ?? [],
         search: definition.search ?? [],
         pinned: result.pinned,
-        favorite: result.favorite,
+        bookmark: result.bookmark,
         type: result.type,
         state: result.state,
         createdAt: result.createdAt,
@@ -373,7 +373,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('definition')
         .select('avatar')
         .select('pinned')
-        .select('favorite')
+        .select('bookmark')
         .select('type')
         .select('state')
         .select('createdAt')
@@ -397,7 +397,7 @@ const makeRouter = (ctx: AppContext) => {
             mentions: definition.mentions ?? [],
             search: definition.search ?? [],
             pinned: feed.pinned,
-            favorite: feed.favorite,
+            bookmark: feed.bookmark,
             type: feed.type,
             state: feed.state,
             createdAt: feed.createdAt,
@@ -450,7 +450,7 @@ const makeRouter = (ctx: AppContext) => {
           did: did,
           avatar: payload.avatar?.trim() ?? '',
           pinned: payload.pinned ? 1 : 0,
-          favorite: payload.favorite ? 1 : 0,
+          bookmark: payload.bookmark ? 1 : 0,
           type: payload.type ?? '',
           state: payload.state ?? 'draft',
           createdAt: timestamp,

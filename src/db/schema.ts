@@ -30,7 +30,7 @@ export type Feed = {
   did: string
   avatar: string
   pinned: number
-  favorite: number
+  bookmark: number
   type: string
   state: string
   createdAt: string

@@ -191,3 +191,18 @@ migrations['005'] = {
     await db.schema.dropTable('user_log').execute()
   },
 }
+
+migrations['006'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('feed')
+      .renameColumn('favorite', 'bookmark')
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('feed')
+      .renameColumn('bookmark', 'favorite')
+      .execute()
+  },
+}

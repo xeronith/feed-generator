@@ -51,7 +51,7 @@ export class ApplicationDatabase {
   }
 
   public async migrateToLatest() {
-    ;[this.master, this.replica].forEach(async (db) => {
+    ;[this.master].forEach(async (db) => {
       const migrator = new Migrator({ db, provider: migrationProvider })
       const { error } = await migrator.migrateToLatest()
       if (error) throw error

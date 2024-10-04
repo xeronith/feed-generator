@@ -131,7 +131,7 @@ const run = async () => {
 
   // bookmark feed
   await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
-    favorite: true,
+    bookmark: true,
   })
 
   // get draft feeds
