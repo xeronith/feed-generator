@@ -4,6 +4,7 @@ import { InProcCache } from './algos/dynamic/cache'
 
 interface RegisterRequestBody {
   identifier: string
+  slug?: string
   displayName: string
   description: string
   avatar: string
@@ -19,6 +20,7 @@ interface RegisterRequestBody {
 
 interface UpdateStateRequestBody {
   displayName?: string
+  slug?: string
   description?: string
   avatar?: string
   pinned?: boolean
@@ -120,6 +122,16 @@ const makeRouter = (ctx: AppContext) => {
       let cacheInvalidated = false
       let builder = ctx.db.updateTable('feed')
 
+      if ('slug' in payload && payload.slug) {
+        modified++
+
+        definition.slug = payload.slug.trim()
+        builder = builder.set({
+          slug: definition.slug,
+          definition: JSON.stringify(definition),
+        })
+      }
+      
       if ('displayName' in payload && payload.displayName) {
         modified++
 
@@ -309,6 +321,8 @@ const makeRouter = (ctx: AppContext) => {
       const result = await ctx.db
         .selectFrom('feed')
         .select('identifier')
+        .select('did')
+        .select('slug')
         .select('displayName')
         .select('description')
         .select('definition')
@@ -331,6 +345,7 @@ const makeRouter = (ctx: AppContext) => {
 
       res.status(200).json({
         identifier: result.identifier,
+        slug: result.slug,
         displayName: result.displayName,
         description: result.description,
         avatar: result.avatar,
@@ -344,7 +359,7 @@ const makeRouter = (ctx: AppContext) => {
         state: result.state,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
-        atUri: `at://${req['bsky'].did}/app.bsky.feed.generator/${result.identifier}`,
+        atUri: `at://${result.did}/app.bsky.feed.generator/${result.identifier}`,
       })
     } catch (error) {
       return res.status(500).json({
@@ -368,6 +383,8 @@ const makeRouter = (ctx: AppContext) => {
       const result = await ctx.db
         .selectFrom('feed')
         .select('identifier')
+        .select('did')
+        .select('slug')
         .select('displayName')
         .select('description')
         .select('definition')
@@ -389,6 +406,7 @@ const makeRouter = (ctx: AppContext) => {
 
           return {
             identifier: feed.identifier,
+            slug: feed.slug,
             displayName: feed.displayName,
             description: feed.description,
             avatar: feed.avatar,
@@ -402,7 +420,7 @@ const makeRouter = (ctx: AppContext) => {
             state: feed.state,
             createdAt: feed.createdAt,
             updatedAt: feed.updatedAt,
-            atUri: `at://${req['bsky'].did}/app.bsky.feed.generator/${feed.identifier}`,
+            atUri: `at://${feed.did}/app.bsky.feed.generator/${feed.identifier}`,
           }
         }),
       )
@@ -444,7 +462,8 @@ const makeRouter = (ctx: AppContext) => {
         .insertInto('feed')
         .values({
           identifier: identifier,
-          displayName: payload.displayName?.trim(),
+          slug: payload.slug?.trim() ?? identifier,
+          displayName: payload.displayName?.trim() ?? '',
           description: payload.description?.trim() ?? '',
           definition: JSON.stringify(payload),
           did: did,

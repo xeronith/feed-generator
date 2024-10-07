@@ -12,18 +12,21 @@ export const handler = async (
   params: QueryParams,
   identity: Identity,
 ) => {
-  const identifier = params[shortname]
+  const did = params['feed-host']
+  const slug = params[shortname]
 
   const record = await ctx.db
     .selectFrom('feed')
     .selectAll()
-    .where('identifier', '=', identifier)
+    .where('did', '=', did)
+    .where('slug', '=', slug)
     .executeTakeFirst()
 
   if (!record) {
     return Nothing
   }
 
+  const identifier: string = record.identifier
   const definition: Definition = JSON.parse(record.definition)
 
   const authors: string[] = []
@@ -84,5 +87,5 @@ export const handler = async (
   definition.mentions = mentions
   definition.search = search
 
-  return execute({ app: ctx, identity, identifier, definition }, params)
+  return execute({ app: ctx, identity, identifier: identifier, definition }, params)
 }

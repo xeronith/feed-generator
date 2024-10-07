@@ -42,6 +42,7 @@ const run = async () => {
   // create feed (default state is draft)
   const postFeedResponse = await axios.post(feedEndpoint, {
     identifier: `${feedIdentifier}`,
+    slug: `astronomy`,
     displayName: 'Astronomy',
     description: 'Lorem ipsum ...',
     avatar: 'https://picsum.photos/200',

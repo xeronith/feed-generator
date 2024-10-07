@@ -206,3 +206,21 @@ migrations['006'] = {
       .execute()
   },
 }
+
+migrations['007'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('feed')
+      .addColumn('slug', 'varchar', (col) => col.defaultTo(''))
+      .execute()
+
+    await db.schema
+      .createIndex('feed_didSlugIndex')
+      .on('feed')
+      .columns(['did', 'slug'])
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    db.schema.dropIndex('feed_didSlugIndex').on('feed').execute()
+  },
+}

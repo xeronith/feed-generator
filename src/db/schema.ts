@@ -24,6 +24,7 @@ export type SubState = {
 
 export type Feed = {
   identifier: string
+  slug: string
   displayName: string
   description: string
   definition: string

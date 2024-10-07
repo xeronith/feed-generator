@@ -13,6 +13,7 @@ export default function (server: Server, ctx: AppContext) {
 
     if (!algo) {
       algo = algos[dynamic.shortname]
+      params['feed-host'] = feedUri.host
       params[dynamic.shortname] = feedUri.rkey
     }
 
