@@ -131,14 +131,14 @@ migrations['004'] = {
       .execute()
   },
   async down(db: Kysely<unknown>) {
-    db.schema.dropIndex('feedIdentifierIndex').on('query_log').execute()
-    db.schema.dropIndex('userDidIndex').on('query_log').execute()
-    db.schema.dropIndex('userHandleIndex').on('query_log').execute()
-    db.schema.dropIndex('targetIndex').on('query_log').execute()
-    db.schema.dropIndex('durationIndex').on('query_log').execute()
-    db.schema.dropIndex('successfulIndex').on('query_log').execute()
-    db.schema.dropIndex('timestampIndex').on('query_log').execute()
-    db.schema.dropIndex('createdAtIndex').on('query_log').execute()
+    db.schema.dropIndex('feedIdentifierIndex').execute()
+    db.schema.dropIndex('userDidIndex').execute()
+    db.schema.dropIndex('userHandleIndex').execute()
+    db.schema.dropIndex('targetIndex').execute()
+    db.schema.dropIndex('durationIndex').execute()
+    db.schema.dropIndex('successfulIndex').execute()
+    db.schema.dropIndex('timestampIndex').execute()
+    db.schema.dropIndex('createdAtIndex').execute()
     await db.schema.dropTable('query_log').execute()
   },
 }
@@ -183,11 +183,11 @@ migrations['005'] = {
       .execute()
   },
   async down(db: Kysely<unknown>) {
-    db.schema.dropIndex('userLog_userDidIndex').on('user_log').execute()
-    db.schema.dropIndex('userLog_userHandleIndex').on('user_log').execute()
-    db.schema.dropIndex('userLog_activityIndex').on('user_log').execute()
-    db.schema.dropIndex('userLog_timestampIndex').on('user_log').execute()
-    db.schema.dropIndex('userLog_createdAtIndex').on('user_log').execute()
+    db.schema.dropIndex('userLog_userDidIndex').execute()
+    db.schema.dropIndex('userLog_userHandleIndex').execute()
+    db.schema.dropIndex('userLog_activityIndex').execute()
+    db.schema.dropIndex('userLog_timestampIndex').execute()
+    db.schema.dropIndex('userLog_createdAtIndex').execute()
     await db.schema.dropTable('user_log').execute()
   },
 }
@@ -216,11 +216,31 @@ migrations['007'] = {
 
     await db.schema
       .createIndex('feed_didSlugIndex')
+      .unique()
       .on('feed')
       .columns(['did', 'slug'])
       .execute()
   },
   async down(db: Kysely<unknown>) {
-    db.schema.dropIndex('feed_didSlugIndex').on('feed').execute()
+    db.schema.dropIndex('feed_didSlugIndex').execute()
+  },
+}
+
+migrations['008'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('feed')
+      .addColumn('deletedAt', 'varchar', (col) => col.defaultTo(''))
+      .execute()
+
+    await db.schema
+      .createIndex('feed_deletedAtIndex')
+      .on('feed')
+      .column('deletedAt')
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    db.schema.dropIndex('feed_deletedAtIndex').execute()
+    await db.schema.alterTable('feed').dropColumn('deletedAt').execute()
   },
 }

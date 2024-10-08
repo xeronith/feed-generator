@@ -62,6 +62,7 @@ const makeRouter = (ctx: AppContext) => {
           .selectAll()
           .where('did', '=', did)
           .where('identifier', '=', identifier)
+          .where('deletedAt', '=', '')
           .executeTakeFirst()
 
         if (!record) {
@@ -79,8 +80,9 @@ const makeRouter = (ctx: AppContext) => {
               definition: JSON.stringify(definition),
               updatedAt: new Date().toISOString(),
             })
-            .where('identifier', '=', identifier)
             .where('did', '=', did)
+            .where('identifier', '=', identifier)
+            .where('deletedAt', '=', '')
             .execute()
         }
       } catch (error) {
@@ -131,7 +133,7 @@ const makeRouter = (ctx: AppContext) => {
           definition: JSON.stringify(definition),
         })
       }
-      
+
       if ('displayName' in payload && payload.displayName) {
         modified++
 
@@ -256,6 +258,7 @@ const makeRouter = (ctx: AppContext) => {
         builder = builder
           .where('identifier', '=', identifier)
           .where('did', '=', req['bsky'].did)
+          .where('deletedAt', '=', '')
 
         await builder.execute()
 
@@ -294,10 +297,18 @@ const makeRouter = (ctx: AppContext) => {
 
       delete InProcCache[identifier]
 
+      const now = new Date()
+
       await ctx.db
-        .deleteFrom('feed')
+        .updateTable('feed')
+        .set({
+          identifier: `${identifier}-${now.getTime()}`,
+          slug: `${identifier}-${now.getTime()}`,
+          deletedAt: now.toISOString(),
+        })
         .where('identifier', '=', identifier)
         .where('did', '=', req['bsky'].did)
+        .where('deletedAt', '=', '')
         .execute()
     } catch (error) {
       return res.status(500).json({
@@ -335,6 +346,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('updatedAt')
         .where('did', '=', req['bsky'].did)
         .where('identifier', '=', identifier)
+        .where('deletedAt', '=', '')
         .executeTakeFirst()
 
       if (!result) {
@@ -396,6 +408,7 @@ const makeRouter = (ctx: AppContext) => {
         .select('createdAt')
         .select('updatedAt')
         .where('did', '=', req['bsky'].did)
+        .where('deletedAt', '=', '')
         // .where('state', '=', state)
         .orderBy('createdAt', 'desc')
         .execute()
@@ -474,6 +487,7 @@ const makeRouter = (ctx: AppContext) => {
           state: payload.state ?? 'draft',
           createdAt: timestamp,
           updatedAt: timestamp,
+          deletedAt: '',
         })
         .execute()
     } catch (error) {

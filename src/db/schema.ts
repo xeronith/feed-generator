@@ -36,6 +36,7 @@ export type Feed = {
   state: string
   createdAt: string
   updatedAt: string
+  deletedAt: string
 }
 
 export type Cache = {
