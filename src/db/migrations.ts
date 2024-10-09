@@ -260,3 +260,17 @@ migrations['009'] = {
     await db.schema.dropTable('wait_list').execute()
   },
 }
+
+migrations['010'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('email_lookup')
+      .addColumn('id', 'varchar', (col) => col.primaryKey())
+      .addColumn('email', 'varchar', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('email_lookup').execute()
+  },
+}

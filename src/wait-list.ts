@@ -9,6 +9,28 @@ const makeRouter = (ctx: AppContext) => {
     const email = req['bsky'].email
 
     try {
+      {
+        const result = await ctx.db
+          .selectFrom('email_lookup')
+          .select('createdAt')
+          .where('email', '=', email)
+          .executeTakeFirst()
+
+        if (result) {
+          const timestamp = new Date(result.createdAt).toISOString()
+          await ctx.db
+            .insertInto('wait_list')
+            .values({
+              did: did,
+              email: email,
+              createdAt: timestamp,
+              updatedAt: new Date().toISOString(),
+              joined: 1,
+            })
+            .execute()
+        }
+      }
+
       const result = await ctx.db
         .selectFrom('wait_list')
         .select('did')

@@ -6,6 +6,7 @@ export type DatabaseSchema = {
   query_log: QueryLog
   user_log: UserLog
   wait_list: WaitList
+  email_lookup: EmailLookup
 }
 
 export type Post = {
@@ -74,4 +75,10 @@ export type WaitList = {
   createdAt: string
   updatedAt: string
   joined: number
+}
+
+export type EmailLookup = {
+  id: string
+  email: string
+  createdAt: string
 }
