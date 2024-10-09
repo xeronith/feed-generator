@@ -54,7 +54,7 @@ const makeRouter = (ctx: AppContext) => {
         .executeTakeFirst()
 
       if (result) {
-        return res.status(400).json({
+        return res.status(409).json({
           error: 'DID already registered',
         })
       }
