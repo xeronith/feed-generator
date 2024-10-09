@@ -33,11 +33,17 @@ const run = async () => {
   const waitListEndpoint = `${host}/wait-list`
 
   // join wait list
+  
+  // server recognizes the user based on authorization token
+  // and no extra parameters are needed.
   const postWaitListResponse = await axios.post(waitListEndpoint)
 
   console.log(postWaitListResponse.data)
 
   // check wait list
+  
+  // server recognizes the user based on authorization token
+  // and no extra parameters are needed.
   const getWaitListResponse = await axios.get(waitListEndpoint)
 
   console.log(getWaitListResponse.data)
