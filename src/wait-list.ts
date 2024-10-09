@@ -9,27 +9,7 @@ const makeRouter = (ctx: AppContext) => {
     const email = req['bsky'].email
 
     try {
-      {
-        const result = await ctx.db
-          .selectFrom('email_lookup')
-          .select('createdAt')
-          .where('email', '=', email)
-          .executeTakeFirst()
-
-        if (result) {
-          const timestamp = new Date(result.createdAt).toISOString()
-          await ctx.db
-            .insertInto('wait_list')
-            .values({
-              did: did,
-              email: email,
-              createdAt: timestamp,
-              updatedAt: new Date().toISOString(),
-              joined: 1,
-            })
-            .execute()
-        }
-      }
+      await checkAndImportEmail(ctx, did, email)
 
       const result = await ctx.db
         .selectFrom('wait_list')
@@ -50,7 +30,7 @@ const makeRouter = (ctx: AppContext) => {
         did: result.did,
         email: result.email,
         createdAt: result.createdAt,
-        joined: result.joined
+        joined: result.joined,
       })
     } catch (error) {
       return res.status(500).json({
@@ -70,6 +50,8 @@ const makeRouter = (ctx: AppContext) => {
     }
 
     try {
+      await checkAndImportEmail(ctx, did, email)
+
       const result = await ctx.db
         .selectFrom('wait_list')
         .select('did')
@@ -109,4 +91,40 @@ const makeRouter = (ctx: AppContext) => {
 
   return router
 }
+
+const checkAndImportEmail = async (
+  ctx: AppContext,
+  did: string,
+  email: string,
+) => {
+  const emailAlreadyRegistered = await ctx.db
+    .selectFrom('email_lookup')
+    .select('createdAt')
+    .where('email', '=', email)
+    .executeTakeFirst()
+
+  if (emailAlreadyRegistered) {
+    const didAlreadyRegistered = await ctx.db
+      .selectFrom('wait_list')
+      .select('did')
+      .where('did', '=', did)
+      .where('email', '=', email)
+      .executeTakeFirst()
+
+    if (!didAlreadyRegistered) {
+      const timestamp = new Date(emailAlreadyRegistered.createdAt).toISOString()
+      await ctx.db
+        .insertInto('wait_list')
+        .values({
+          did: did,
+          email: email,
+          createdAt: timestamp,
+          updatedAt: new Date().toISOString(),
+          joined: 1,
+        })
+        .execute()
+    }
+  }
+}
+
 export default makeRouter
