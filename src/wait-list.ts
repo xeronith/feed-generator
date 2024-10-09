@@ -35,6 +35,7 @@ const makeRouter = (ctx: AppContext) => {
         .selectFrom('wait_list')
         .select('did')
         .select('email')
+        .select('joined')
         .select('createdAt')
         .select('updatedAt')
         .where('did', '=', did)
@@ -48,7 +49,8 @@ const makeRouter = (ctx: AppContext) => {
       res.status(200).json({
         did: result.did,
         email: result.email,
-        joinedAt: result.createdAt,
+        createdAt: result.createdAt,
+        joined: result.joined
       })
     } catch (error) {
       return res.status(500).json({
@@ -89,7 +91,7 @@ const makeRouter = (ctx: AppContext) => {
           email: email,
           createdAt: timestamp,
           updatedAt: timestamp,
-          joined: 1,
+          joined: 0,
         })
         .execute()
     } catch (error) {
