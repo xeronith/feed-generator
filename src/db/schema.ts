@@ -5,6 +5,7 @@ export type DatabaseSchema = {
   cache: Cache
   query_log: QueryLog
   user_log: UserLog
+  wait_list: WaitList
 }
 
 export type Post = {
@@ -65,4 +66,12 @@ export type UserLog = {
   content: string
   timestamp: number
   createdAt: string
+}
+
+export type WaitList = {
+  did: string
+  email: string
+  createdAt: string
+  updatedAt: string
+  joined: number
 }

@@ -244,3 +244,19 @@ migrations['008'] = {
     await db.schema.alterTable('feed').dropColumn('deletedAt').execute()
   },
 }
+
+migrations['009'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('wait_list')
+      .addColumn('did', 'varchar', (col) => col.primaryKey())
+      .addColumn('email', 'varchar', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .addColumn('updatedAt', 'varchar', (col) => col.notNull())
+      .addColumn('joined', 'integer', (col) => col.notNull())
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('wait_list').execute()
+  },
+}

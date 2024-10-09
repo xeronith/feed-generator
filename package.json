@@ -13,6 +13,7 @@
     "resolve": "ts-node scripts/resolveHandle.ts",
     "profile": "ts-node scripts/getProfile.ts",
     "feed": "ts-node scripts/feed.ts",
+    "wait-list": "ts-node scripts/wait-list.ts",
     "fetch": "ts-node scripts/fetch.ts",
     "start": "ts-node src/index.ts",
     "build": "tsc"
