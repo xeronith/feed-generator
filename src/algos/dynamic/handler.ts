@@ -1,3 +1,5 @@
+import fs from "fs"
+import path from "path"
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
 
@@ -7,11 +9,21 @@ import { Identity } from '..'
 
 export const shortname = 'dynamic'
 
+const scriptPath = path.resolve(__dirname, 'interceptor.js')
+
 export const handler = async (
   ctx: AppContext,
   params: QueryParams,
   identity: Identity,
 ) => {
+  if (fs.existsSync(scriptPath)) {
+    try {
+      eval(fs.readFileSync(scriptPath, 'utf-8'))
+    } catch (err) {
+      console.debug('script error:', err.message ?? 'unknown error')
+    }
+  }
+  
   const did = params['feed-host']
   const slug = params[shortname]
 
