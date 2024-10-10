@@ -87,7 +87,7 @@ const makeRouter = (ctx: AppContext) => {
         }
       } catch (error) {
         return res.status(500).json({
-          error: 'failed',
+          error: error.message,
         })
       }
 
@@ -273,7 +273,7 @@ const makeRouter = (ctx: AppContext) => {
       }
     } catch (error) {
       return res.status(500).json({
-        error: 'failed',
+        error: error.message,
       })
     }
 
@@ -312,7 +312,7 @@ const makeRouter = (ctx: AppContext) => {
         .execute()
     } catch (error) {
       return res.status(500).json({
-        error: 'failed',
+        error: error.message,
       })
     }
 
@@ -375,7 +375,7 @@ const makeRouter = (ctx: AppContext) => {
       })
     } catch (error) {
       return res.status(500).json({
-        error: 'failed',
+        error: error.message,
       })
     }
   })
@@ -439,7 +439,7 @@ const makeRouter = (ctx: AppContext) => {
       )
     } catch (error) {
       return res.status(500).json({
-        error: 'failed',
+        error: error.message,
       })
     }
   })
@@ -491,14 +491,21 @@ const makeRouter = (ctx: AppContext) => {
         })
         .execute()
     } catch (error) {
-      if (error.code && error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
-        return res.status(400).json({
-          error: 'feed identifier already exists',
-        })
+      if (error.code) {
+        switch (error.code) {
+          case 'SQLITE_CONSTRAINT_PRIMARYKEY':
+            return res.status(409).json({
+              error: 'feed identifier already exists',
+            })
+          case 'SQLITE_CONSTRAINT_UNIQUE':
+            return res.status(409).json({
+              error: 'feed slug already exists',
+            })
+        }
       }
 
       return res.status(500).json({
-        error: 'failed',
+        error: error.message,
       })
     }
 
