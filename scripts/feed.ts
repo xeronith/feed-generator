@@ -35,6 +35,7 @@ const run = async () => {
 
   const feedEndpoint = `${host}/feed`
   const feedIdentifier = 'astronomy-feed'
+  const feedSlug = 'astronomy'
 
   // delete feed
   await axios.delete(`${feedEndpoint}/${feedIdentifier}`)
@@ -42,7 +43,7 @@ const run = async () => {
   // create feed (default state is draft)
   const postFeedResponse = await axios.post(feedEndpoint, {
     identifier: `${feedIdentifier}`,
-    slug: `astronomy`,
+    slug: `${feedSlug}`,
     displayName: 'Astronomy',
     description: 'Lorem ipsum ...',
     avatar: 'https://picsum.photos/200',
@@ -69,6 +70,7 @@ const run = async () => {
 
   // update feed
   await axios.put(`${feedEndpoint}/${feedIdentifier}`, {
+    slug: `${feedSlug}`,
     displayName: 'Modified display name',
     description: 'Modified description',
     avatar: 'https://picsum.photos/100',
