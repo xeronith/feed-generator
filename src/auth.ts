@@ -36,6 +36,7 @@ const tokenCache: Record<
   excludedRoutes = [
     '/xrpc/app.bsky.feed.getFeedSkeleton',
     '/.well-known/did.json',
+    '/wait-list/allow'
   ]
 
 export async function AuthMiddleware(

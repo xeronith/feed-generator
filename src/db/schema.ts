@@ -75,10 +75,12 @@ export type WaitList = {
   createdAt: string
   updatedAt: string
   joined: number
+  allowedToUseApp: number
 }
 
 export type EmailLookup = {
   id: string
   email: string
   createdAt: string
+  allowedToUseApp: number
 }

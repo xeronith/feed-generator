@@ -14,7 +14,8 @@ const run = async () => {
   }
 
   const handle = process.env.FEEDGEN_PUBLISH_HANDLE,
-    password = process.env.FEEDGEN_PUBLISH_APP_PASSWORD
+    password = process.env.FEEDGEN_PUBLISH_APP_PASSWORD,
+    apiKey = process.env.ADMIN_API_KEY
 
   // only update this if in a test environment
   const agent = new AtpAgent({ service: 'https://bsky.social' })
@@ -32,21 +33,44 @@ const run = async () => {
 
   const waitListEndpoint = `${host}/wait-list`
 
-  // join wait list
-  
-  // server recognizes the user based on authorization token
-  // and no extra parameters are needed.
-  const postWaitListResponse = await axios.post(waitListEndpoint)
+  {
+    // check wait list
 
-  console.log(postWaitListResponse.data)
+    // server recognizes the user based on authorization token
+    // and no extra parameters are needed.
+    const getWaitListResponse = await axios.get(waitListEndpoint)
 
-  // check wait list
-  
-  // server recognizes the user based on authorization token
-  // and no extra parameters are needed.
-  const getWaitListResponse = await axios.get(waitListEndpoint)
+    console.log(getWaitListResponse.data)
+  }
 
-  console.log(getWaitListResponse.data)
+  {
+    // allow or disallow users
+
+    const postWaitListResponse = await axios.post(
+      `${waitListEndpoint}/allow`,
+      {
+        email: 'special-user@somewhere.com',
+        allowedToUseApp: true,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      },
+    )
+
+    console.log(postWaitListResponse.data)
+  }
+
+  {
+    // check wait list again
+
+    // server recognizes the user based on authorization token
+    // and no extra parameters are needed.
+    const getWaitListResponse = await axios.get(waitListEndpoint)
+
+    console.log(getWaitListResponse.data)
+  }
 }
 
 run()

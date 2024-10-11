@@ -1,21 +1,113 @@
 import express from 'express'
+import dotenv from 'dotenv'
 import { AppContext } from './config'
+
+interface UpdateRequestBody {
+  email: string
+  allowedToUseApp: boolean
+}
 
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
+
+  router.post('/wait-list/allow', async (req, res) => {
+    if (req.headers['authorization'] != `Bearer ${process.env.ADMIN_API_KEY}`) {
+      return res.status(401).json({
+        error: 'missing or invalid api-key',
+      })
+    }
+
+    const payload = req.body as UpdateRequestBody
+    if (!('email' in payload) || typeof payload.email !== 'string') {
+      return res.status(400).json({
+        error: '"email" is required',
+      })
+    }
+
+    if (!('allowedToUseApp' in payload)) {
+      return res.status(400).json({
+        error: '"allowedToUseApp" is required',
+      })
+    }
+
+    try {
+      const emailAlreadyRegistered = await ctx.db
+        .selectFrom('email_lookup')
+        .select('email')
+        .where('email', '=', payload.email)
+        .executeTakeFirst()
+
+      if (!emailAlreadyRegistered) {
+        await ctx.db
+          .insertInto('email_lookup')
+          .values({
+            id: payload.email,
+            email: payload.email,
+            createdAt: new Date().toISOString(),
+            allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+          })
+          .execute()
+      } else {
+        await ctx.db
+          .updateTable('email_lookup')
+          .set({
+            allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+          })
+          .where('email', '=', payload.email)
+          .executeTakeFirst()
+      }
+
+      await ctx.db
+        .updateTable('wait_list')
+        .set({
+          allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+        })
+        .where('email', '=', payload.email)
+        .executeTakeFirst()
+
+      return res.status(200).json({
+        email: payload.email,
+        allowedToUseApp: payload.allowedToUseApp,
+      })
+    } catch (error) {
+      return res.status(500).json({
+        error: error.message,
+      })
+    }
+  })
 
   router.get('/wait-list', async (req, res) => {
     const did = req['bsky'].did
     const email = req['bsky'].email
 
+    if (!email) {
+      return res.status(404).json({
+        error: 'Bluesky email not found',
+      })
+    }
+
     try {
-      await checkAndImportEmail(ctx, did, email)
+      let allowedToUseApp = 0,
+        createdAt = new Date().toISOString()
+
+      const emailAlreadyRegistered = await ctx.db
+        .selectFrom('email_lookup')
+        .select('createdAt')
+        .select('allowedToUseApp')
+        .where('email', '=', email)
+        .executeTakeFirst()
+
+      if (emailAlreadyRegistered) {
+        createdAt = new Date(emailAlreadyRegistered.createdAt).toISOString()
+        allowedToUseApp = emailAlreadyRegistered.allowedToUseApp
+      }
 
       const result = await ctx.db
         .selectFrom('wait_list')
         .select('did')
         .select('email')
         .select('joined')
+        .select('allowedToUseApp')
         .select('createdAt')
         .select('updatedAt')
         .where('did', '=', did)
@@ -23,108 +115,42 @@ const makeRouter = (ctx: AppContext) => {
         .executeTakeFirst()
 
       if (!result) {
-        return res.sendStatus(404)
-      }
+        await ctx.db
+          .insertInto('wait_list')
+          .values({
+            did: did,
+            email: email,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+            joined: 0,
+            allowedToUseApp: allowedToUseApp,
+          })
+          .execute()
 
-      res.status(200).json({
-        did: result.did,
-        email: result.email,
-        createdAt: result.createdAt,
-        joined: result.joined,
-      })
-    } catch (error) {
-      return res.status(500).json({
-        error: 'failed',
-      })
-    }
-  })
-
-  router.post('/wait-list', async (req, res) => {
-    const did = req['bsky'].did
-    const email = req['bsky'].email
-
-    if (!email) {
-      return res.status(404).json({
-        error: 'email not found',
-      })
-    }
-
-    try {
-      await checkAndImportEmail(ctx, did, email)
-
-      const result = await ctx.db
-        .selectFrom('wait_list')
-        .select('did')
-        .where('did', '=', did)
-        .where('email', '=', email)
-        .executeTakeFirst()
-
-      if (result) {
-        return res.status(409).json({
-          error: 'DID already registered',
-        })
-      }
-
-      const timestamp = new Date().toISOString()
-      await ctx.db
-        .insertInto('wait_list')
-        .values({
+        res.status(200).json({
           did: did,
           email: email,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-          joined: 0,
+          createdAt: createdAt,
+          joined: false,
+          allowedToUseApp: allowedToUseApp > 0,
         })
-        .execute()
+      } else {
+        res.status(200).json({
+          did: result.did,
+          email: result.email,
+          createdAt: result.createdAt,
+          joined: result.joined > 0,
+          allowedToUseApp: result.allowedToUseApp > 0,
+        })
+      }
     } catch (error) {
       return res.status(500).json({
-        error: 'failed',
+        error: error.message,
       })
     }
-
-    res.status(201).json({
-      status: 'created',
-      did: did,
-      email: email,
-    })
   })
 
   return router
-}
-
-const checkAndImportEmail = async (
-  ctx: AppContext,
-  did: string,
-  email: string,
-) => {
-  const emailAlreadyRegistered = await ctx.db
-    .selectFrom('email_lookup')
-    .select('createdAt')
-    .where('email', '=', email)
-    .executeTakeFirst()
-
-  if (emailAlreadyRegistered) {
-    const didAlreadyRegistered = await ctx.db
-      .selectFrom('wait_list')
-      .select('did')
-      .where('did', '=', did)
-      .where('email', '=', email)
-      .executeTakeFirst()
-
-    if (!didAlreadyRegistered) {
-      const timestamp = new Date(emailAlreadyRegistered.createdAt).toISOString()
-      await ctx.db
-        .insertInto('wait_list')
-        .values({
-          did: did,
-          email: email,
-          createdAt: timestamp,
-          updatedAt: new Date().toISOString(),
-          joined: 1,
-        })
-        .execute()
-    }
-  }
 }
 
 export default makeRouter

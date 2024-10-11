@@ -274,3 +274,27 @@ migrations['010'] = {
     await db.schema.dropTable('email_lookup').execute()
   },
 }
+
+migrations['011'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('email_lookup')
+      .addColumn('allowedToUseApp', 'integer', (col) => col.defaultTo(0))
+      .execute()
+
+    await db.schema
+      .alterTable('wait_list')
+      .addColumn('allowedToUseApp', 'integer', (col) => col.defaultTo(0))
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('wait_list')
+      .dropColumn('allowedToUseApp')
+      .execute()
+    await db.schema
+      .alterTable('email_lookup')
+      .dropColumn('allowedToUseApp')
+      .execute()
+  },
+}

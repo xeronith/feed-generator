@@ -456,7 +456,7 @@ const makeRouter = (ctx: AppContext) => {
       payload.identifier.trim().length > 15
     ) {
       return res.status(400).json({
-        error: 'invalid identifier',
+        error: 'invalid identifier (required, min-length: 2, max-length: 15)',
       })
     }
 
