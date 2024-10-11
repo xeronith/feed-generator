@@ -371,7 +371,7 @@ const makeRouter = (ctx: AppContext) => {
         state: result.state,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
-        atUri: `at://${result.did}/app.bsky.feed.generator/${result.identifier}`,
+        atUri: `at://${result.did}/app.bsky.feed.generator/${result.slug}`,
       })
     } catch (error) {
       return res.status(500).json({
@@ -433,7 +433,7 @@ const makeRouter = (ctx: AppContext) => {
             state: feed.state,
             createdAt: feed.createdAt,
             updatedAt: feed.updatedAt,
-            atUri: `at://${feed.did}/app.bsky.feed.generator/${feed.identifier}`,
+            atUri: `at://${feed.did}/app.bsky.feed.generator/${feed.slug}`,
           }
         }),
       )
@@ -468,6 +468,7 @@ const makeRouter = (ctx: AppContext) => {
 
     const did = req['bsky'].did
     const identifier = payload.identifier.trim()
+    const slug = payload.slug?.trim() ?? identifier
 
     try {
       const timestamp = new Date().toISOString()
@@ -475,7 +476,7 @@ const makeRouter = (ctx: AppContext) => {
         .insertInto('feed')
         .values({
           identifier: identifier,
-          slug: payload.slug?.trim() ?? identifier,
+          slug: slug,
           displayName: payload.displayName?.trim() ?? '',
           description: payload.description?.trim() ?? '',
           definition: JSON.stringify(payload),
@@ -513,7 +514,7 @@ const makeRouter = (ctx: AppContext) => {
       status: 'created',
       identifier: identifier,
       did: did,
-      atUri: `at://${did}/app.bsky.feed.generator/${identifier}`,
+      atUri: `at://${did}/app.bsky.feed.generator/${slug}`,
     })
   })
 
