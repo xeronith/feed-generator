@@ -1,4 +1,5 @@
 import SqliteDb from 'better-sqlite3'
+import { CronJob } from 'cron'
 import { Kysely, Migrator, SqliteDialect } from 'kysely'
 import { Database as SqliteDatabase } from 'better-sqlite3'
 import { Config } from '../config'
@@ -44,6 +45,32 @@ export class ApplicationDatabase {
     this.replica = new Kysely<DatabaseSchema>({
       dialect: new SqliteDialect({ database: secondary }),
     })
+
+    new CronJob(
+      `0 0 0 * * *`,
+      () => {
+        const cutoff = new Date(
+          new Date().getTime() - 48 * 60 * 60 * 1000,
+        ).toISOString()
+
+        try {
+          console.debug('draft feeds cleanup attempt:', cutoff)
+
+          this.master
+            .deleteFrom('feed')
+            .where('state', '=', 'draft')
+            .where('createdAt', '<', cutoff)
+            .execute()
+
+          console.debug('draft feeds cleanup success:', cutoff)
+        } catch (error) {
+          console.error('could not clean draft feeds', error)
+        }
+      },
+      null,
+      true,
+      'UTC',
+    )
   }
 
   public get(): Database {
