@@ -70,7 +70,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       buffer = buffer.concat(postsToCreate)
 
       if (this.cfg.localFirehose) {
-        if (buffer.length >= 250) {
+        if (buffer.length >= 500) {
           await this.cacheDb.write((connection) => {
             const stmt = connection.prepare(
               'INSERT INTO "post" ("uri", "author", "text", "indexedAt", "createdAt") VALUES (?, ?, ?, ?, ?)',
