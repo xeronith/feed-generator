@@ -36,6 +36,7 @@ const tokenCache: Record<
   excludedRoutes = [
     '/xrpc/app.bsky.feed.getFeedSkeleton',
     '/.well-known/did.json',
+    '/api-docs',
     '/wait-list/allow'
   ]
 
@@ -52,8 +53,10 @@ export async function AuthMiddleware(
     }
   }
 
-  if (excludedRoutes.includes(req.path)) {
-    return next()
+  for (let i = 0; i < excludedRoutes.length; i++) {
+    if (req.path.startsWith(excludedRoutes[i])) {
+      return next()
+    }
   }
 
   const authHeader = req.headers['authorization']

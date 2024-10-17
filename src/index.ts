@@ -12,7 +12,8 @@ const run = async () => {
     port: maybeInt(process.env.FEEDGEN_PORT) ?? 3000,
     listenhost: maybeStr(process.env.FEEDGEN_LISTENHOST) ?? 'localhost',
     sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? ':memory:',
-    sqliteReplicaLocation: maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? ':memory:',
+    sqliteReplicaLocation:
+      maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? ':memory:',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
     localFirehose: maybeBoolean(process.env.FEEDGEN_LOCAL_FIREHOSE),
     subscriptionEndpoint:
@@ -25,9 +26,12 @@ const run = async () => {
     cacheTimeout:
       maybeInt(process.env.FEEDGEN_CACHE_TIMEOUT) ?? 24 * 60 * 60 * 1000,
     maxInterval: maybeInt(process.env.FEEDGEN_MAX_INTERVAL) ?? 7,
-    cacheCleanupInterval: maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_INTERVAL) ?? 30,
-    cacheCleanupPageSize: maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_PAGE_SIZE) ?? 10000,
-    cacheDiggingDepth: maybeInt(process.env.FEEDGEN_CACHE_DIGGING_DEPTH) ?? 5000,
+    cacheCleanupInterval:
+      maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_INTERVAL) ?? 30,
+    cacheCleanupPageSize:
+      maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_PAGE_SIZE) ?? 10000,
+    cacheDiggingDepth:
+      maybeInt(process.env.FEEDGEN_CACHE_DIGGING_DEPTH) ?? 5000,
     protocol: maybeStr(process.env.FEEDGEN_PROTOCOL) ?? 'https',
     hostname,
     serviceDid,
@@ -51,7 +55,11 @@ const run = async () => {
   const server = FeedGenerator.create(cfg)
   await server.start()
 
-  const banner = `🤖 Running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}`
+  const banner = `
+    🤖 Running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}
+    📝 Docs at http://${server.cfg.listenhost}:${server.cfg.port}/api-docs
+  `
+
   console.log(banner)
 
   Telegram.send(banner)

@@ -2,6 +2,7 @@ import http from 'http'
 import path from 'path'
 import events from 'events'
 import express from 'express'
+import swaggerUi from 'swagger-ui-express'
 import cors from 'cors'
 import morgan from 'morgan'
 import { Storage } from '@google-cloud/storage'
@@ -13,6 +14,7 @@ import { AppContext, Config } from './config'
 import { AuthMiddleware } from './auth'
 import { CacheDatabase } from './db/cache'
 import { createServer } from './lexicon'
+import { openapiSpecification } from './swagger'
 import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import wellKnown from './well-known'
@@ -44,6 +46,7 @@ export class FeedGenerator {
     const app = express()
     app.use(cors())
     app.use(AuthMiddleware)
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
 
     if (cfg.httpLogEnabled) {
       app.use(morgan(cfg.httpLogFormat))
