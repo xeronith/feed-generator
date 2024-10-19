@@ -59,6 +59,10 @@ export async function AuthMiddleware(
     }
   }
 
+  if (req.path.startsWith('/log/user') && req.method.toUpperCase() === 'GET') {
+    return next()
+  }
+
   const authHeader = req.headers['authorization']
   if (!authHeader) {
     return res.status(401).json({

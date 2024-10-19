@@ -17,7 +17,8 @@ const run = async () => {
   }
 
   const handle = process.env.FEEDGEN_PUBLISH_HANDLE,
-    password = process.env.FEEDGEN_PUBLISH_APP_PASSWORD
+    password = process.env.FEEDGEN_PUBLISH_APP_PASSWORD,
+    apiKey = process.env.ADMIN_API_KEY
 
   // only update this if in a test environment
   const agent = new AtpAgent({ service: 'https://bsky.social' })
@@ -31,7 +32,7 @@ const run = async () => {
     'Authorization'
   ] = `Bearer ${loginResponse.data.accessJwt}`
 
-  const host = 'http://localhost:3000'
+  const host = 'http://127.0.0.1:3000'
 
   const feedEndpoint = `${host}/feed`
   const feedIdentifier = 'astronomy-feed'
@@ -150,6 +151,19 @@ const run = async () => {
       // ...
     },
   })
+
+  // get user log
+  {
+    const getLogResponse = await axios.get(
+      `${logEndpoint}/user?activity=registration`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      },
+    )
+    console.log(getLogResponse.data)
+  }
 }
 
 run()
