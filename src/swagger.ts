@@ -18,7 +18,7 @@ const options = {
       },
     },
   },
-  apis: ['./src/feed.ts', './src/feed.js'],
+  apis: ['./src/feed.ts', './feed.js', './dist/feed.js'],
 }
 
 export const openapiSpecification = swaggerJsdoc(options)

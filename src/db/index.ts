@@ -12,39 +12,46 @@ export class ApplicationDatabase {
   private replica: Database
 
   constructor(cfg: Config) {
-    const primary = new SqliteDb(cfg.sqliteLocation)
-    const secondary = new SqliteDb(cfg.sqliteReplicaLocation)
-
     const WAL = 'journal_mode = WAL'
 
+    const primary = new SqliteDb(cfg.sqliteLocation)
     primary.pragma(WAL)
-    secondary.pragma(WAL)
 
-    const replicate = async (db: SqliteDatabase, event: any) => {
-      try {
-        if (
-          event.level === 'query' &&
-          !event.query.sql.toLowerCase().startsWith('select')
-        ) {
-          db.prepare(event.query.sql).run(event.query.parameters)
+    const replicaEnabled = cfg.sqliteReplicaLocation ?? false
+    if (replicaEnabled) {
+      const secondary = new SqliteDb(cfg.sqliteReplicaLocation)
+      secondary.pragma(WAL)
+
+      const replicate = async (db: SqliteDatabase, event: any) => {
+        try {
+          if (
+            event.level === 'query' &&
+            !event.query.sql.toLowerCase().startsWith('select')
+          ) {
+            db.prepare(event.query.sql).run(event.query.parameters)
+          }
+        } catch (err) {
+          const alert = `replication failed\n${err}\n${JSON.stringify(event)}`
+          console.log(alert)
+          Telegram.send(alert)
         }
-      } catch (err) {
-        const alert = `replication failed\n${err}\n${JSON.stringify(event)}`
-        console.log(alert)
-        Telegram.send(alert)
       }
+
+      this.master = new Kysely<DatabaseSchema>({
+        dialect: new SqliteDialect({ database: primary }),
+        log(event: any): void {
+          replicate(secondary, event)
+        },
+      })
+
+      this.replica = new Kysely<DatabaseSchema>({
+        dialect: new SqliteDialect({ database: secondary }),
+      })
+    } else {
+      this.master = new Kysely<DatabaseSchema>({
+        dialect: new SqliteDialect({ database: primary }),
+      })
     }
-
-    this.master = new Kysely<DatabaseSchema>({
-      dialect: new SqliteDialect({ database: primary }),
-      log(event: any): void {
-        replicate(secondary, event)
-      },
-    })
-
-    this.replica = new Kysely<DatabaseSchema>({
-      dialect: new SqliteDialect({ database: secondary }),
-    })
 
     new CronJob(
       `0 0 0 * * *`,
@@ -78,11 +85,10 @@ export class ApplicationDatabase {
   }
 
   public async migrateToLatest() {
-    ;[this.master].forEach(async (db) => {
-      const migrator = new Migrator({ db, provider: migrationProvider })
-      const { error } = await migrator.migrateToLatest()
-      if (error) throw error
-    })
+    const db = this.master
+    const migrator = new Migrator({ db, provider: migrationProvider })
+    const { error } = await migrator.migrateToLatest()
+    if (error) throw error
   }
 }
 

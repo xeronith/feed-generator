@@ -10,10 +10,10 @@ const run = async () => {
     maybeStr(process.env.FEEDGEN_SERVICE_DID) ?? `did:web:${hostname}`
   const cfg = {
     port: maybeInt(process.env.FEEDGEN_PORT) ?? 3000,
-    listenhost: maybeStr(process.env.FEEDGEN_LISTENHOST) ?? 'localhost',
-    sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? ':memory:',
+    listenhost: maybeStr(process.env.FEEDGEN_LISTENHOST) ?? '0.0.0.0',
+    sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? './data/feed.db',
     sqliteReplicaLocation:
-      maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? ':memory:',
+      maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? '',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
     localFirehose: maybeBoolean(process.env.FEEDGEN_LOCAL_FIREHOSE),
     subscriptionEndpoint:
@@ -27,11 +27,11 @@ const run = async () => {
       maybeInt(process.env.FEEDGEN_CACHE_TIMEOUT) ?? 24 * 60 * 60 * 1000,
     maxInterval: maybeInt(process.env.FEEDGEN_MAX_INTERVAL) ?? 7,
     cacheCleanupInterval:
-      maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_INTERVAL) ?? 30,
+      maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_INTERVAL) ?? 10,
     cacheCleanupPageSize:
       maybeInt(process.env.FEEDGEN_CACHE_CLEANUP_PAGE_SIZE) ?? 10000,
     cacheDiggingDepth:
-      maybeInt(process.env.FEEDGEN_CACHE_DIGGING_DEPTH) ?? 5000,
+      maybeInt(process.env.FEEDGEN_CACHE_DIGGING_DEPTH) ?? 4000,
     protocol: maybeStr(process.env.FEEDGEN_PROTOCOL) ?? 'https',
     hostname,
     serviceDid,
@@ -45,9 +45,9 @@ const run = async () => {
     bigQueryRealtimeEnabled: process.env.BIGQUERY_REALTIME_TABLE_ID
       ? true
       : false,
-    gcsKeyFile: maybeStr(process.env.GCS_KEY_FILE) ?? '',
-    gcsProjectId: maybeStr(process.env.GCS_PROJECT_ID) ?? '',
-    gcsBucket: maybeStr(process.env.GCS_BUCKET) ?? '',
+    gcsKeyFile: maybeStr(process.env.GCS_KEY_FILE) ?? 'gcs-key-file',
+    gcsProjectId: maybeStr(process.env.GCS_PROJECT_ID) ?? 'gcs-project-id',
+    gcsBucket: maybeStr(process.env.GCS_BUCKET) ?? 'gcs-bucket',
     httpLogEnabled: maybeBoolean(process.env.HTTP_LOG_ENABLED),
     httpLogFormat: maybeStr(process.env.HTTP_LOG_FORMAT) ?? 'combined',
   }
@@ -56,8 +56,8 @@ const run = async () => {
   await server.start()
 
   const banner = `
-    🤖 Running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}
-    📝 Docs at http://${server.cfg.listenhost}:${server.cfg.port}/api-docs
+    🤖 Running feed generator at http://localhost:${server.cfg.port}
+    📝 Docs at http://localhost:${server.cfg.port}/api-docs
   `
 
   console.log(banner)
