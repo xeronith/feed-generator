@@ -1,5 +1,4 @@
 import express from 'express'
-import dotenv from 'dotenv'
 import { AppContext } from './config'
 
 interface UpdateRequestBody {

@@ -28,7 +28,7 @@ const run = async () => {
     'Authorization'
   ] = `Bearer ${loginResponse.data.accessJwt}`
 
-  const endpoint = 'http://localhost:3000'
+  const endpoint = 'http://127.0.0.1:3000'
   const feedEndpoint = `${endpoint}/feed`
   const feedIdentifier = 'astronomy-feed'
 
