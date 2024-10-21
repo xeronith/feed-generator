@@ -1,6 +1,7 @@
 import express from 'express'
 import { AppContext } from './config'
 import { InProcCache } from './algos/dynamic/cache'
+import { removeFileFromStorage } from './util/gcs'
 
 interface RegisterRequestBody {
   identifier: string
@@ -440,6 +441,10 @@ const makeRouter = (ctx: AppContext) => {
       }
 
       if ('avatar' in payload) {
+        if (record.avatar !== payload.avatar) {
+          removeFileFromStorage(ctx, record.avatar)
+        }
+
         modified++
 
         definition.avatar = payload.avatar?.trim() ?? ''
@@ -628,8 +633,12 @@ const makeRouter = (ctx: AppContext) => {
           return res.sendStatus(404)
         }
 
+        let avatarUpdatedAt = record.updatedAt
         const definition = JSON.parse(record.definition)
         if (definition.avatar !== avatarUrl) {
+          removeFileFromStorage(ctx, record.avatar)
+
+          avatarUpdatedAt = new Date().toISOString()
           definition.avatar = avatarUrl
 
           ctx.db
@@ -637,22 +646,23 @@ const makeRouter = (ctx: AppContext) => {
             .set({
               avatar: avatarUrl,
               definition: JSON.stringify(definition),
-              updatedAt: new Date().toISOString(),
+              updatedAt: avatarUpdatedAt,
             })
             .where('did', '=', did)
             .where('identifier', '=', identifier)
             .where('deletedAt', '=', '')
             .execute()
         }
+
+        res.status(200).json({
+          url: avatarUrl,
+          updatedAt: avatarUpdatedAt,
+        })
       } catch (error) {
         return res.status(500).json({
           error: error.message,
         })
       }
-
-      res.status(200).json({
-        url: avatarUrl,
-      })
     },
   )
 
