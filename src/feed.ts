@@ -419,30 +419,30 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
-      if ('displayName' in payload && payload.displayName) {
+      if ('displayName' in payload) {
         modified++
 
-        definition.displayName = payload.displayName.trim()
+        definition.displayName = payload.displayName?.trim() ?? ''
         builder = builder.set({
           displayName: definition.displayName,
           definition: JSON.stringify(definition),
         })
       }
 
-      if ('description' in payload && payload.description) {
+      if ('description' in payload) {
         modified++
 
-        definition.description = payload.description.trim()
+        definition.description = payload.description?.trim() ?? ''
         builder = builder.set({
           description: definition.description,
           definition: JSON.stringify(definition),
         })
       }
 
-      if ('avatar' in payload && payload.avatar) {
+      if ('avatar' in payload) {
         modified++
 
-        definition.avatar = payload.avatar.trim()
+        definition.avatar = payload.avatar?.trim() ?? ''
         builder = builder.set({
           avatar: definition.avatar,
           definition: JSON.stringify(definition),
