@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import jwt, { JwtPayload } from 'jsonwebtoken'
 import express, { Request, Response, NextFunction } from 'express'
 import {
   verifyJwt,
@@ -8,6 +9,10 @@ import {
 } from '@atproto/xrpc-server'
 import { DidResolver } from '@atproto/identity'
 import { AtpAgent } from '@atproto/api'
+
+interface AgentJwtPayload extends JwtPayload {
+  exp?: number
+}
 
 export const validateAuth = async (
   req: express.Request,
@@ -30,14 +35,13 @@ const tokenCache: Record<
     string,
     { did: string; handle: string; email: string; expiry: number }
   > = {},
-  CACHE_EXPIRY_MS = 30 * 60 * 1000,
   agent = new AtpAgent({ service: 'https://bsky.social' }),
   scriptPath = path.resolve(__dirname, 'interceptor.js'),
   excludedRoutes = [
     '/xrpc/app.bsky.feed.getFeedSkeleton',
     '/.well-known/did.json',
     '/api-docs',
-    '/wait-list/allow'
+    '/wait-list/allow',
   ]
 
 export async function AuthMiddleware(
@@ -92,6 +96,13 @@ export async function AuthMiddleware(
         { headers: { Authorization: authHeader } },
       )
 
+      const decodedToken = jwt.decode(token) as AgentJwtPayload | null
+      if (!decodedToken || !decodedToken.exp) {
+        throw new Error('invalid token')
+      }
+
+      const expiry = decodedToken.exp * 1000
+
       if (!result.success) {
         delete tokenCache[token]
         return res.status(401).json({ error: 'token could not be verified' })
@@ -101,13 +112,17 @@ export async function AuthMiddleware(
         did: result.data.did,
         handle: result.data.handle,
         email: result.data.email ?? 'n/a',
-        expiry: Date.now() + CACHE_EXPIRY_MS,
+        expiry: expiry,
       }
 
       req['bsky'] = {
         did: tokenCache[token].did,
         handle: tokenCache[token].handle,
         email: tokenCache[token].email,
+      }
+
+      if (req.path === '/auth-info') {
+        return res.status(200).json(req['bsky'])
       }
 
       return next()

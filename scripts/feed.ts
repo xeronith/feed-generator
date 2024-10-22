@@ -38,6 +38,11 @@ const run = async () => {
   const feedIdentifier = 'astronomy-feed'
   const feedSlug = 'astronomy'
 
+  {
+    const authInfoResponse = await axios.delete(`${host}/auth-info`)
+    console.log(authInfoResponse.data)
+  }
+
   // delete feed
   await axios.delete(`${feedEndpoint}/${feedIdentifier}`)
 
