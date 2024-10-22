@@ -87,7 +87,8 @@ const run = async () => {
     const filepath = path.resolve(__dirname, 'feed.png')
     data.append('file', fs.createReadStream(filepath))
 
-    await axios.put(`${feedEndpoint}/${feedIdentifier}/avatar`, data)
+    const updateAvatarResponse = await axios.put(`${feedEndpoint}/${feedIdentifier}/avatar`, data)
+    console.log(updateAvatarResponse.data)
   }
 
   // pin feed
