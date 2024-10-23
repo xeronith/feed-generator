@@ -33,8 +33,8 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
 
   if (values.length) {
     query += ` AND "text" MATCH ?`
-    log += ` AND "text" MATCH '${values.join(' ')}'`
-    parameters.push(values.join(' '))
+    log += ` AND "text" MATCH '${values.join(' OR ')}'`
+    parameters.push(values.join(' OR '))
   }
 
   let ordering = ` ORDER BY "rowid" DESC`
