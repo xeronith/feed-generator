@@ -34,19 +34,17 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
           ctx.definition.hashtags.forEach((e) => exacts.push(e.toUpperCase()))
         }
 
-        cachedResult = cachedResult.filter((row) => {
-          if (exacts.length === 0) {
-            return true
-          }
-
-          for (let i = 0; i < exacts.length; i++) {
-            if (row.text.toUpperCase().indexOf(exacts[i]) >= 0) {
-              return true
+        if (exacts.length > 0) {
+          cachedResult = cachedResult.filter((row) => {
+            for (let i = 0; i < exacts.length; i++) {
+              if (row.text.toUpperCase().indexOf(exacts[i]) >= 0) {
+                return true
+              }
             }
-          }
 
-          return false
-        })
+            return false
+          })
+        }
 
         console.timeEnd('-> EXACT')
 
