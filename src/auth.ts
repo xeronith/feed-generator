@@ -35,7 +35,6 @@ const tokenCache: Record<
     string,
     { did: string; handle: string; email: string; expiry: number }
   > = {},
-  agent = new AtpAgent({ service: 'https://bsky.social' }),
   scriptPath = path.resolve(__dirname, 'interceptor.js'),
   excludedRoutes = [
     '/xrpc/app.bsky.feed.getFeedSkeleton',
@@ -91,6 +90,10 @@ export async function AuthMiddleware(
     return next()
   } else {
     try {
+      const agent = new AtpAgent({
+        service: req.headers['pds-server']?.toString() ?? 'https://bsky.social',
+      })
+
       const result = await agent.com.atproto.server.getSession(
         {},
         { headers: { Authorization: authHeader } },
