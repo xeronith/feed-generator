@@ -23,6 +23,20 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
 
         cachedResult = realtimeResult.concat(cachedResult)
 
+        cachedResult.sort((x, y) => {
+          const dateX = new Date(x.createdAt).getTime()
+          const dateY = new Date(y.createdAt).getTime()
+
+          const isValidX = !isNaN(dateX)
+          const isValidY = !isNaN(dateY)
+
+          if (!isValidX && !isValidY) return 0 // Both invalid, keep original order
+          if (!isValidX) return 1 // Move invalid `x` to the end
+          if (!isValidY) return -1 // Move invalid `y` to the end
+
+          return dateY - dateX
+        })
+
         console.time('-> EXACT')
 
         const exacts: string[] = []
