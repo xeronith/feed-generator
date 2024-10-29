@@ -11,12 +11,6 @@ const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
 
   router.post('/wait-list/allow', async (req, res) => {
-    if (req.headers['authorization'] != `Bearer ${process.env.ADMIN_API_KEY}`) {
-      return res.status(401).json({
-        error: 'missing or invalid api-key',
-      })
-    }
-
     const payload = req.body as UpdateRequestBody
     if (!('email' in payload) || typeof payload.email !== 'string') {
       return res.status(400).json({

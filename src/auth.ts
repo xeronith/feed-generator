@@ -40,7 +40,6 @@ const tokenCache: Record<
     '/xrpc/app.bsky.feed.getFeedSkeleton',
     '/.well-known/did.json',
     '/api-docs',
-    '/wait-list/allow',
   ]
 
 export async function AuthMiddleware(
@@ -63,9 +62,9 @@ export async function AuthMiddleware(
   }
 
   if (
-    (req.path.startsWith('/log/user') ||
-      req.path.startsWith('/wait-list/report')) &&
-    req.method.toUpperCase() === 'GET'
+    req.path.startsWith('/wait-list/allow') ||
+    req.path.startsWith('/wait-list/report') ||
+    (req.path.startsWith('/log/user') && req.method.toUpperCase() === 'GET')
   ) {
     if (req.headers['authorization'] != `Bearer ${process.env.ADMIN_API_KEY}`) {
       return res.status(401).json({
