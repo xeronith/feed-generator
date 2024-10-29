@@ -62,7 +62,7 @@ const run = async () => {
 
   console.log(postFeedResponse.data)
 
-  // get draft feeds
+  // get all feeds
   {
     const getFeedResponse = await axios.get(feedEndpoint)
     console.log(getFeedResponse.data)
@@ -106,7 +106,7 @@ const run = async () => {
     bookmark: true,
   })
 
-  // get draft feeds
+  // get all feeds
   {
     const getFeedResponse = await axios.get(feedEndpoint)
     console.log(getFeedResponse.data)
@@ -119,7 +119,7 @@ const run = async () => {
 
   // get feeds by state
   {
-    const getFeedResponse = await axios.get(`${feedEndpoint}?state=published`)
+    const getFeedResponse = await axios.get(`${feedEndpoint}?state=draft,ready,published`)
     console.log(getFeedResponse.data)
   }
 
@@ -130,7 +130,7 @@ const run = async () => {
 
   // get feeds by state
   {
-    const getFeedResponse = await axios.get(`${feedEndpoint}?state=ready`)
+    const getFeedResponse = await axios.get(`${feedEndpoint}?state=draft,ready,published`)
     console.log(getFeedResponse.data)
   }
 
@@ -141,7 +141,7 @@ const run = async () => {
 
   // get feeds by state
   {
-    const getFeedResponse = await axios.get(`${feedEndpoint}?state=published`)
+    const getFeedResponse = await axios.get(`${feedEndpoint}?state=draft,ready,published`)
     console.log(getFeedResponse.data)
   }
 

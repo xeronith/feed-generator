@@ -4,7 +4,7 @@ import { InProcCache } from './algos/dynamic/cache'
 import { removeFileFromStorage } from './util/gcs'
 import { handleError } from './util/errors'
 
-interface RegisterRequestBody {
+interface PostRequestBody {
   identifier: string
   slug?: string
   displayName: string
@@ -20,7 +20,7 @@ interface RegisterRequestBody {
   search: string[]
 }
 
-interface UpdateStateRequestBody {
+interface PutRequestBody {
   displayName?: string
   slug?: string
   description?: string
@@ -37,6 +37,7 @@ interface UpdateStateRequestBody {
 
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
+  const allowedStates = ['draft', 'ready', 'published']
 
   /**
    * @openapi
@@ -57,14 +58,8 @@ const makeRouter = (ctx: AppContext) => {
       return res.sendStatus(404)
     }
 
-    const queryState = req.query.state as string | undefined
-    let state = 'draft'
-    if (queryState && allowedStates.includes(queryState)) {
-      state = queryState
-    }
-
     try {
-      const result = await ctx.db
+      let builder = ctx.db
         .selectFrom('feed')
         .select('identifier')
         .select('did')
@@ -81,11 +76,30 @@ const makeRouter = (ctx: AppContext) => {
         .select('updatedAt')
         .where('did', '=', req['bsky'].did)
         .where('deletedAt', '=', '')
-        // .where('state', '=', state)
-        .orderBy('createdAt', 'desc')
-        .execute()
 
-      res.status(200).json(
+      if (req.query.state && typeof req.query.state === 'string') {
+        const states: string[] = []
+
+        const queryState = req.query.state.split(',') || []
+        for (let i = 0; i < queryState.length; i++) {
+          queryState[i] = queryState[i].trim().toLowerCase()
+          if (!allowedStates.includes(queryState[i])) {
+            return res.status(400).json({
+              error: "invalid state. must be 'draft', 'ready', or 'published'",
+            })
+          }
+
+          states.push(queryState[i])
+        }
+
+        if (states.length > 0) {
+          builder = builder.where('state', 'in', states)
+        }
+      }
+
+      const result = await builder.orderBy('createdAt', 'desc').execute()
+
+      return res.status(200).json(
         result.map((feed) => {
           const definition = JSON.parse(feed.definition)
 
@@ -251,7 +265,7 @@ const makeRouter = (ctx: AppContext) => {
       return res.sendStatus(404)
     }
 
-    const payload = req.body as RegisterRequestBody
+    const payload = req.body as PostRequestBody
     if (
       !payload.identifier ||
       payload.identifier.trim().length < 2 ||
@@ -305,7 +319,6 @@ const makeRouter = (ctx: AppContext) => {
     })
   })
 
-  const allowedStates = ['draft', 'ready', 'published']
   /**
    * @openapi
    * /feed/{identifier}:
@@ -372,7 +385,7 @@ const makeRouter = (ctx: AppContext) => {
     }
 
     const identifier = req.params.identifier
-    const payload = req.body as UpdateStateRequestBody
+    const payload = req.body as PutRequestBody
 
     try {
       const record = await ctx.db
