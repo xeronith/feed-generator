@@ -2,6 +2,7 @@ import express from 'express'
 import { AppContext } from './config'
 import { InProcCache } from './algos/dynamic/cache'
 import { removeFileFromStorage } from './util/gcs'
+import { handleError } from './util/errors'
 
 interface RegisterRequestBody {
   identifier: string
@@ -109,9 +110,7 @@ const makeRouter = (ctx: AppContext) => {
         }),
       )
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
   })
 
@@ -188,9 +187,7 @@ const makeRouter = (ctx: AppContext) => {
         atUri: `at://${result.did}/app.bsky.feed.generator/${result.slug}`,
       })
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
   })
 
@@ -297,22 +294,7 @@ const makeRouter = (ctx: AppContext) => {
         })
         .execute()
     } catch (error) {
-      if (error.code) {
-        switch (error.code) {
-          case 'SQLITE_CONSTRAINT_PRIMARYKEY':
-            return res.status(409).json({
-              error: 'feed identifier already exists',
-            })
-          case 'SQLITE_CONSTRAINT_UNIQUE':
-            return res.status(409).json({
-              error: 'feed slug already exists',
-            })
-        }
-      }
-
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
 
     res.status(201).json({
@@ -562,9 +544,7 @@ const makeRouter = (ctx: AppContext) => {
         }
       }
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
 
     res.status(200).json({
@@ -659,9 +639,7 @@ const makeRouter = (ctx: AppContext) => {
           updatedAt: avatarUpdatedAt,
         })
       } catch (error) {
-        return res.status(500).json({
-          error: error.message,
-        })
+        return handleError(res, error)
       }
     },
   )
@@ -715,9 +693,7 @@ const makeRouter = (ctx: AppContext) => {
         .where('deletedAt', '=', '')
         .execute()
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
 
     res.status(200).json({
@@ -727,4 +703,5 @@ const makeRouter = (ctx: AppContext) => {
 
   return router
 }
+
 export default makeRouter

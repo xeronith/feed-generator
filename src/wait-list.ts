@@ -1,5 +1,6 @@
 import express from 'express'
 import { AppContext } from './config'
+import { handleError } from './util/errors'
 
 interface UpdateRequestBody {
   email: string
@@ -69,9 +70,7 @@ const makeRouter = (ctx: AppContext) => {
         allowedToUseApp: payload.allowedToUseApp,
       })
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
   })
 
@@ -143,9 +142,7 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      })
+      return handleError(res, error)
     }
   })
 

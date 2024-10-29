@@ -1,5 +1,6 @@
 import express from 'express'
 import { AppContext } from './config'
+import { handleError } from './util/errors'
 
 interface UserLogRequestBody {
   activity: string
@@ -37,9 +38,7 @@ const makeRouter = (ctx: AppContext) => {
   
       res.status(200).json(result)
     } catch (error) {
-      return res.status(500).json({
-        error: 'failed',
-      })
+      return handleError(res, error)
     }
   })
 
@@ -72,9 +71,7 @@ const makeRouter = (ctx: AppContext) => {
         })
         .execute()
     } catch (error) {
-      return res.status(500).json({
-        error: 'failed',
-      })
+      return handleError(res, error)
     }
 
     res.status(201).json({
@@ -84,4 +81,5 @@ const makeRouter = (ctx: AppContext) => {
 
   return router
 }
+
 export default makeRouter
