@@ -11,12 +11,6 @@ const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
 
   router.get('/log/user', async (req, res) => {
-    if (req.headers['authorization'] != `Bearer ${process.env.ADMIN_API_KEY}`) {
-      return res.status(401).json({
-        error: 'missing or invalid api-key',
-      })
-    }
-    
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
     }

@@ -62,7 +62,17 @@ export async function AuthMiddleware(
     }
   }
 
-  if (req.path.startsWith('/log/user') && req.method.toUpperCase() === 'GET') {
+  if (
+    (req.path.startsWith('/log/user') ||
+      req.path.startsWith('/wait-list/report')) &&
+    req.method.toUpperCase() === 'GET'
+  ) {
+    if (req.headers['authorization'] != `Bearer ${process.env.ADMIN_API_KEY}`) {
+      return res.status(401).json({
+        error: 'missing or invalid api-key',
+      })
+    }
+
     return next()
   }
 

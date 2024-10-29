@@ -146,6 +146,40 @@ const makeRouter = (ctx: AppContext) => {
     }
   })
 
+  router.get('/wait-list/report', async (req, res) => {
+    try {
+      let builder = ctx.db
+        .selectFrom('wait_list')
+        .select('did')
+        .select('email')
+        .select('allowedToUseApp')
+        .select('createdAt')
+
+      if ('allowed' in req.query) {
+        builder = builder.where(
+          'allowedToUseApp',
+          '=',
+          req.query.allowed === 'true' ? 1 : 0,
+        )
+      }
+
+      const result = await builder.execute()
+
+      return res.status(200).json(
+        result.map((item) => {
+          return {
+            did: item.did,
+            email: item.email,
+            allowedToUseApp: item.allowedToUseApp > 0,
+            createdAt: item.createdAt,
+          }
+        }),
+      )
+    } catch (error) {
+      return handleError(res, error)
+    }
+  })
+
   return router
 }
 

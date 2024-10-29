@@ -63,6 +63,21 @@ const run = async () => {
   }
 
   {
+    // get allowed users (omitting 'allowed' query parameter will return all users)
+
+    const getWaitListReportResponse = await axios.get(
+      `${waitListEndpoint}/report?allowed=true`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      },
+    )
+
+    console.log(getWaitListReportResponse.data)
+  }
+
+  {
     // check wait list again
 
     // server recognizes the user based on authorization token
