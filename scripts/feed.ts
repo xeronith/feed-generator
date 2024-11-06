@@ -58,6 +58,7 @@ const run = async () => {
     mentions: ['@user1', '@user2'],
     search: ['nebula', 'galaxy', 'star'],
     type: 'mixed',
+    operator: 'AND',
   })
 
   console.log(postFeedResponse.data)
@@ -84,6 +85,7 @@ const run = async () => {
     hashtags: ['#astronomy-modified', '#astrophysics-modified'],
     mentions: ['@user3', '@user4'],
     search: ['nebula-modified', 'galaxy-modified', 'star-modified'],
+    operator: 'OR',
   })
 
   // update avatar
@@ -92,7 +94,10 @@ const run = async () => {
     const filepath = path.resolve(__dirname, 'feed.png')
     data.append('file', fs.createReadStream(filepath))
 
-    const updateAvatarResponse = await axios.put(`${feedEndpoint}/${feedIdentifier}/avatar`, data)
+    const updateAvatarResponse = await axios.put(
+      `${feedEndpoint}/${feedIdentifier}/avatar`,
+      data,
+    )
     console.log(updateAvatarResponse.data)
   }
 
@@ -119,7 +124,9 @@ const run = async () => {
 
   // get feeds by state
   {
-    const getFeedResponse = await axios.get(`${feedEndpoint}?state=draft,ready,published`)
+    const getFeedResponse = await axios.get(
+      `${feedEndpoint}?state=draft,ready,published`,
+    )
     console.log(getFeedResponse.data)
   }
 
@@ -130,7 +137,9 @@ const run = async () => {
 
   // get feeds by state
   {
-    const getFeedResponse = await axios.get(`${feedEndpoint}?state=draft,ready,published`)
+    const getFeedResponse = await axios.get(
+      `${feedEndpoint}?state=draft,ready,published`,
+    )
     console.log(getFeedResponse.data)
   }
 
@@ -141,7 +150,9 @@ const run = async () => {
 
   // get feeds by state
   {
-    const getFeedResponse = await axios.get(`${feedEndpoint}?state=draft,ready,published`)
+    const getFeedResponse = await axios.get(
+      `${feedEndpoint}?state=draft,ready,published`,
+    )
     console.log(getFeedResponse.data)
   }
 

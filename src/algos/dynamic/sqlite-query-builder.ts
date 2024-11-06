@@ -31,10 +31,15 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     parameters.push(authors.join(' OR '))
   }
 
+  let operator = ' OR '
+  if (ctx.definition.operator === 'AND') {
+    operator = ' '
+  }
+
   if (values.length) {
     query += ` AND "text" MATCH ?`
-    log += ` AND "text" MATCH '${values.join(' OR ')}'`
-    parameters.push(values.join(' OR '))
+    log += ` AND "text" MATCH '${values.join(operator)}'`
+    parameters.push(values.join(operator))
   }
 
   let ordering = ` ORDER BY "rowid" DESC`

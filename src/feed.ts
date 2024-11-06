@@ -12,6 +12,7 @@ interface PostRequestBody {
   avatar: string
   pinned?: boolean
   bookmark?: boolean
+  operator: string
   type?: string
   state?: string
   users: string[]
@@ -27,6 +28,7 @@ interface PutRequestBody {
   avatar?: string
   pinned?: boolean
   bookmark?: boolean
+  operator: string
   type?: string
   state?: string
   users: string[]
@@ -115,6 +117,7 @@ const makeRouter = (ctx: AppContext) => {
             search: definition.search ?? [],
             pinned: feed.pinned,
             bookmark: feed.bookmark,
+            operator: definition.operator ?? 'OR',
             type: feed.type,
             state: feed.state,
             createdAt: feed.createdAt,
@@ -194,6 +197,7 @@ const makeRouter = (ctx: AppContext) => {
         search: definition.search ?? [],
         pinned: result.pinned,
         bookmark: result.bookmark,
+        operator: definition.operator ?? 'OR',
         type: result.type,
         state: result.state,
         createdAt: result.createdAt,
@@ -285,6 +289,8 @@ const makeRouter = (ctx: AppContext) => {
     const did = req['bsky'].did
     const identifier = payload.identifier.trim()
     const slug = payload.slug?.trim() ?? identifier
+    payload.operator =
+      payload.operator.trim().toUpperCase() === 'AND' ? 'AND' : 'OR'
 
     try {
       const timestamp = new Date().toISOString()
@@ -491,6 +497,16 @@ const makeRouter = (ctx: AppContext) => {
         definition.bookmark = payload.bookmark ? 1 : 0
         builder = builder.set({
           bookmark: definition.bookmark,
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('operator' in payload && typeof payload.operator === 'string') {
+        modified++
+
+        definition.operator =
+          payload.operator.trim().toUpperCase() === 'AND' ? 'AND' : 'OR'
+        builder = builder.set({
           definition: JSON.stringify(definition),
         })
       }

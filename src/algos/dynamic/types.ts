@@ -11,6 +11,7 @@ export interface Definition {
   hashtags?: string[]
   mentions?: string[]
   search?: string[]
+  operator: string
 }
 
 export type ExecutorContext = {
