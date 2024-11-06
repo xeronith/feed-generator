@@ -58,7 +58,7 @@ const run = async () => {
     mentions: ['@user1', '@user2'],
     search: ['nebula', 'galaxy', 'star'],
     type: 'mixed',
-    operator: 'AND',
+    operator: 'AND', // defaults to OR if not provided
   })
 
   console.log(postFeedResponse.data)
