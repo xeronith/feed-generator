@@ -76,12 +76,14 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
 
   console.time('-> CURSOR')
 
+  let timeStr = new Date().toISOString()
   if (params.cursor) {
-    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-    cachedResult = cachedResult.filter((row) => {
-      return row.createdAt < timeStr
-    })
+    timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
   }
+
+  cachedResult = cachedResult.filter((row) => {
+    return row.createdAt < timeStr
+  })
 
   if (ctx.app.cfg.bigQueryEnabled && cachedResult.length < params.limit) {
     cachedResult = await timeMachine(ctx, params)
