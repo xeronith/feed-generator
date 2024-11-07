@@ -286,11 +286,16 @@ const makeRouter = (ctx: AppContext) => {
       })
     }
 
+    if ('operator' in payload && typeof payload.operator === 'string') {
+      payload.operator =
+        payload.operator.trim().toUpperCase() === 'AND' ? 'AND' : 'OR'
+    } else {
+      payload.operator = 'OR'
+    }
+
     const did = req['bsky'].did
     const identifier = payload.identifier.trim()
     const slug = payload.slug?.trim() ?? identifier
-    payload.operator =
-      payload.operator.trim().toUpperCase() === 'AND' ? 'AND' : 'OR'
 
     try {
       const timestamp = new Date().toISOString()
