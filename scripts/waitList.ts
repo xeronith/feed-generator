@@ -49,6 +49,8 @@ const run = async () => {
     const postWaitListResponse = await axios.post(
       `${waitListEndpoint}/allow`,
       {
+        // Either email or handle can be provided but not both.
+        // handle: 'special-user.bsky.social',
         email: 'special-user@somewhere.com',
         allowedToUseApp: true,
       },

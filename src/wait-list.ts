@@ -3,6 +3,7 @@ import { AppContext } from './config'
 import { handleError } from './util/errors'
 
 interface UpdateRequestBody {
+  handle: string
   email: string
   allowedToUseApp: boolean
 }
@@ -12,54 +13,98 @@ const makeRouter = (ctx: AppContext) => {
 
   router.post('/wait-list/allow', async (req, res) => {
     const payload = req.body as UpdateRequestBody
-    if (!('email' in payload) || typeof payload.email !== 'string') {
-      return res.status(400).json({
-        error: '"email" is required',
-      })
-    }
-
     if (!('allowedToUseApp' in payload)) {
       return res.status(400).json({
         error: '"allowedToUseApp" is required',
       })
     }
 
-    try {
-      const emailAlreadyRegistered = await ctx.db
-        .selectFrom('email_lookup')
-        .select('email')
-        .where('email', '=', payload.email)
-        .executeTakeFirst()
+    let handleProvided = false,
+      emailProvided = false
 
-      if (!emailAlreadyRegistered) {
+    if ('handle' in payload && typeof payload.handle === 'string') {
+      handleProvided = true
+    }
+
+    if ('email' in payload && typeof payload.email === 'string') {
+      emailProvided = true
+    }
+
+    if (
+      (handleProvided && emailProvided) ||
+      (!handleProvided && !emailProvided)
+    ) {
+      return res.status(400).json({
+        error: 'either "handle" or "email" is required but not both',
+      })
+    }
+
+    try {
+      if (emailProvided) {
+        const emailAlreadyRegistered = await ctx.db
+          .selectFrom('email_lookup')
+          .select('email')
+          .where('email', '=', payload.email)
+          .executeTakeFirst()
+
+        if (!emailAlreadyRegistered) {
+          await ctx.db
+            .insertInto('email_lookup')
+            .values({
+              id: payload.email,
+              email: payload.email,
+              createdAt: new Date().toISOString(),
+              allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+            })
+            .execute()
+        } else {
+          await ctx.db
+            .updateTable('email_lookup')
+            .set({
+              allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+            })
+            .where('email', '=', payload.email)
+            .execute()
+        }
+
         await ctx.db
-          .insertInto('email_lookup')
-          .values({
-            id: payload.email,
-            email: payload.email,
-            createdAt: new Date().toISOString(),
-            allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
-          })
-          .execute()
-      } else {
-        await ctx.db
-          .updateTable('email_lookup')
+          .updateTable('wait_list')
           .set({
             allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
           })
           .where('email', '=', payload.email)
-          .executeTakeFirst()
+          .execute()
+      } else {
+        const now = new Date().toISOString()
+        const did = await ctx.handleResolver.resolve(payload.handle)
+
+        if (!did) {
+          return res.status(400).json({
+            error: 'failed to resolve handle',
+          })
+        }
+
+        await ctx.db
+          .insertInto('wait_list')
+          .values({
+            did: did,
+            email: '',
+            createdAt: now,
+            updatedAt: now,
+            joined: 0,
+            allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+          })
+          .onConflict((e) =>
+            e.doUpdateSet({
+              updatedAt: now,
+              allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
+            }),
+          )
+          .execute()
       }
 
-      await ctx.db
-        .updateTable('wait_list')
-        .set({
-          allowedToUseApp: payload.allowedToUseApp ? 1 : 0,
-        })
-        .where('email', '=', payload.email)
-        .executeTakeFirst()
-
       return res.status(200).json({
+        handle: payload.handle,
         email: payload.email,
         allowedToUseApp: payload.allowedToUseApp,
       })
@@ -103,7 +148,6 @@ const makeRouter = (ctx: AppContext) => {
         .select('createdAt')
         .select('updatedAt')
         .where('did', '=', did)
-        .where('email', '=', email)
         .executeTakeFirst()
 
       if (!result) {
@@ -127,6 +171,15 @@ const makeRouter = (ctx: AppContext) => {
           allowedToUseApp: allowedToUseApp > 0,
         })
       } else {
+        await ctx.db
+          .updateTable('wait_list')
+          .set({
+            email: email,
+            updatedAt: new Date().toISOString(),
+          })
+          .where('did', '=', did)
+          .execute()
+
         res.status(200).json({
           did: result.did,
           email: result.email,
