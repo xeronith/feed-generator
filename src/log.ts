@@ -1,10 +1,28 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import { AppContext } from './config'
 import { handleError } from './util/errors'
 
 interface UserLogRequestBody {
   activity: string
   content: any
+}
+
+export async function LogMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  let identity: string = 'anonymous'
+
+  if (req['bsky']) {
+    identity = req['bsky'].did ?? 'anonymous'
+  } else if (req.headers['authorization']) {
+    identity = 'bearer-token'
+  }
+
+  console.log('REQ <-', req.method, req.path, identity)
+
+  return next()
 }
 
 const makeRouter = (ctx: AppContext) => {
@@ -14,14 +32,14 @@ const makeRouter = (ctx: AppContext) => {
     if (!ctx.cfg.serviceDid.endsWith(ctx.cfg.hostname)) {
       return res.sendStatus(404)
     }
-  
+
     const activity = req.query.activity as string
     if (!activity) {
       return res.status(400).json({
         error: 'activity is required',
       })
     }
-  
+
     try {
       const result = await ctx.db
         .selectFrom('user_log')
@@ -29,7 +47,7 @@ const makeRouter = (ctx: AppContext) => {
         .selectAll()
         .orderBy('timestamp', 'desc')
         .execute()
-  
+
       res.status(200).json(result)
     } catch (error) {
       return handleError(res, error)

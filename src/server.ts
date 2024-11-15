@@ -20,7 +20,7 @@ import describeGenerator from './methods/describe-generator'
 import wellKnown from './well-known'
 import feed from './feed'
 import waitList from './wait-list'
-import log from './log'
+import log, { LogMiddleware } from './log'
 import { createUploader } from './uploader'
 
 export class FeedGenerator {
@@ -46,6 +46,7 @@ export class FeedGenerator {
     const app = express()
     app.use(cors())
     app.use(AuthMiddleware)
+    app.use(LogMiddleware)
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
 
     if (cfg.httpLogEnabled) {
