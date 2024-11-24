@@ -7,10 +7,14 @@ export const Epoch = '1970-01-01T00:00:00.000Z'
 
 export interface Definition {
   users?: string[]
+  blockedUsers?: string[]
   authors?: string[]
+  blockedAuthors?: string[]
   hashtags?: string[]
   mentions?: string[]
   search?: string[]
+  includedAtUris?: string[]
+  excludedAtUris?: string[]
   operator: string
 }
 

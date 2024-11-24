@@ -15,10 +15,13 @@ interface PostRequestBody {
   operator: string
   type?: string
   state?: string
-  users: string[]
+  users: string[],
+  blockedUsers: string[],
   hashtags: string[]
   mentions: string[]
   search: string[]
+  includeAtUris: string[],
+  excludeAtUris: string[]
 }
 
 interface PutRequestBody {
@@ -32,9 +35,12 @@ interface PutRequestBody {
   type?: string
   state?: string
   users: string[]
+  blockedUsers: string[],
   hashtags: string[]
   mentions: string[]
-  search: string[]
+  search: string[],
+  includeAtUris: string[],
+  excludeAtUris: string[]
 }
 
 const makeRouter = (ctx: AppContext) => {
@@ -112,9 +118,12 @@ const makeRouter = (ctx: AppContext) => {
             description: feed.description,
             avatar: feed.avatar,
             users: definition.users ?? [],
+            blockedUsers: definition.blockedUsers ?? [],
             hashtags: definition.hashtags ?? [],
             mentions: definition.mentions ?? [],
             search: definition.search ?? [],
+            includedAtUris: definition.includedAtUris ?? [],
+            excludedAtUris: definition.excludedAtUris ?? [],
             pinned: feed.pinned,
             bookmark: feed.bookmark,
             operator: definition.operator ?? 'OR',
@@ -192,9 +201,12 @@ const makeRouter = (ctx: AppContext) => {
         description: result.description,
         avatar: result.avatar,
         users: definition.users ?? [],
+        blockedUsers: definition.blockedUsers ?? [],
         hashtags: definition.hashtags ?? [],
         mentions: definition.mentions ?? [],
         search: definition.search ?? [],
+        includedAtUris: definition.includedAtUris ?? [],
+        excludedAtUris: definition.excludedAtUris ?? [],
         pinned: result.pinned,
         bookmark: result.bookmark,
         operator: definition.operator ?? 'OR',
@@ -526,6 +538,16 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
+      if ('blockedUsers' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.blockedUsers = payload.blockedUsers
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
       if ('hashtags' in payload) {
         modified++
         cacheInvalidated = true
@@ -551,6 +573,26 @@ const makeRouter = (ctx: AppContext) => {
         cacheInvalidated = true
 
         definition.search = payload.search
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('includedAtUris' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.includedAtUris = payload.includedAtUris
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('excludedAtUris' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.excludedAtUris = payload.excludedAtUris
         builder = builder.set({
           definition: JSON.stringify(definition),
         })

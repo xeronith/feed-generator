@@ -54,9 +54,12 @@ const run = async () => {
     description: 'Lorem ipsum ...',
     avatar: 'https://picsum.photos/200',
     users: ['user1.bsky.social', 'user2.bsky.social'],
+    blockedUsers: ['blocked_user1.bsky.social', 'blocked_user2.bsky.social'],
     hashtags: ['#astronomy', '#astrophysics'],
     mentions: ['@user1', '@user2'],
     search: ['nebula', 'galaxy', 'star'],
+    includedAtUris: ['at://did:plc:.../app.bsky.feed.post/...'],
+    excludedAtUris: ['at://did:plc:.../app.bsky.feed.post/...'],
     type: 'mixed',
     operator: 'AND', // defaults to OR if not provided
   })
@@ -82,9 +85,12 @@ const run = async () => {
     description: 'Modified description',
     avatar: 'https://picsum.photos/100',
     users: ['user3.bsky.social', 'user4.bsky.social'],
+    blockedUsers: ['blocked_user3.bsky.social', 'blocked_user4.bsky.social'],
     hashtags: ['#astronomy-modified', '#astrophysics-modified'],
     mentions: ['@user3', '@user4'],
     search: ['nebula-modified', 'galaxy-modified', 'star-modified'],
+    includedAtUris: ['at://did:plc:.../app.bsky.feed.post/...'],
+    excludedAtUris: ['at://did:plc:.../app.bsky.feed.post/...'],
     operator: 'OR',
   })
 

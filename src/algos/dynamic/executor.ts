@@ -60,6 +60,26 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
           })
         }
 
+        if (Array.isArray(ctx.definition.blockedAuthors)) {
+          const blockedAuthors = {}
+          ctx.definition.blockedAuthors.forEach((blockedAuthor) => {
+            blockedAuthors[blockedAuthor] = true
+          })
+
+          cachedResult = cachedResult.filter(
+            (row) => !blockedAuthors[row.author],
+          )
+        }
+
+        if (Array.isArray(ctx.definition.excludedAtUris)) {
+          const excludedAtUris = {}
+          ctx.definition.excludedAtUris.forEach((excludedAtUri) => {
+            excludedAtUris[excludedAtUri] = true
+          })
+
+          cachedResult = cachedResult.filter((row) => !excludedAtUris[row.uri])
+        }
+
         console.timeEnd('-> EXACT')
 
         cachedResult = refreshCache(ctx, cachedResult, true)
@@ -96,6 +116,12 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
   const feed = cachedResult.map((item) => ({
     post: item.uri,
   }))
+
+  if (Array.isArray(ctx.definition.includedAtUris)) {
+    ctx.definition.includedAtUris.forEach((uri) => {
+      feed.unshift({ post: uri })
+    })
+  }
 
   let cursor: string | undefined
   const last = cachedResult.at(-1)

@@ -1,5 +1,5 @@
-import fs from "fs"
-import path from "path"
+import fs from 'fs'
+import path from 'path'
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../../config'
 
@@ -23,7 +23,7 @@ export const handler = async (
       console.debug('script error:', err.message ?? 'unknown error')
     }
   }
-  
+
   const did = params['feed-host']
   const slug = params[shortname]
 
@@ -42,9 +42,12 @@ export const handler = async (
   const definition: Definition = JSON.parse(record.definition)
 
   const authors: string[] = []
+  const blockedAuthors: string[] = []
   const hashtags: string[] = []
   const mentions: string[] = []
   const search: string[] = []
+  const includedAtUris: string[] = []
+  const excludedAtUris: string[] = []
 
   if (Array.isArray(definition.users)) {
     const promises = definition.users.map(async (user: string) => {
@@ -59,6 +62,24 @@ export const handler = async (
     const resolvedPromises = await Promise.all(promises)
     resolvedPromises.forEach((author) => {
       if (author) authors.push(author)
+    })
+  }
+
+  if (Array.isArray(definition.blockedUsers)) {
+    const promises = definition.blockedUsers.map(
+      async (blockedUser: string) => {
+        const blockedAuthor = await ctx.handleResolver.resolve(blockedUser)
+        if (blockedAuthor) {
+          return blockedAuthor
+        }
+
+        return null
+      },
+    )
+
+    const resolvedPromises = await Promise.all(promises)
+    resolvedPromises.forEach((blockedAuthor) => {
+      if (blockedAuthor) blockedAuthors.push(blockedAuthor)
     })
   }
 
@@ -85,19 +106,42 @@ export const handler = async (
     })
   }
 
+  if (Array.isArray(definition.includedAtUris)) {
+    definition.includedAtUris.forEach((includedAtUri) => {
+      const value = includedAtUri.trim()
+      if (value) includedAtUris.push(value)
+    })
+  }
+
+  if (Array.isArray(definition.excludedAtUris)) {
+    definition.excludedAtUris.forEach((excludedAtUri) => {
+      const value = excludedAtUri.trim()
+      if (value) excludedAtUris.push(value)
+    })
+  }
+
   if (
     authors.length === 0 &&
+    blockedAuthors.length === 0 &&
     hashtags.length === 0 &&
     mentions.length === 0 &&
-    search.length === 0
+    search.length === 0 &&
+    includedAtUris.length === 0 &&
+    excludedAtUris.length === 0
   ) {
     return Nothing
   }
 
   definition.authors = authors
+  definition.blockedAuthors = blockedAuthors
   definition.hashtags = hashtags
   definition.mentions = mentions
   definition.search = search
+  definition.includedAtUris = includedAtUris
+  definition.excludedAtUris = excludedAtUris
 
-  return execute({ app: ctx, identity, identifier: identifier, definition }, params)
+  return execute(
+    { app: ctx, identity, identifier: identifier, definition },
+    params,
+  )
 }
