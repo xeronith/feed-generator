@@ -38,33 +38,17 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     if (!isCommit(evt)) return
     const ops = await getOpsByType(evt)
 
-    // for (const post of ops.posts.creates) {
-    //   console.log(post)
-    // }
-
-    const postsToDelete = ops.posts.deletes.map((del) => del.uri)
-    const postsToCreate = ops.posts.creates
-      .filter((create) => {
-        return true
-      })
-      .map((create) => {
-        return {
-          uri: create.uri,
-          cid: create.cid,
-          text: create.record.text,
-          author: create.author,
-          indexedAt: new Date().toISOString(),
-          createdAt: create.record.createdAt,
-          content: JSON.stringify(create),
-        }
-      })
-
-    if (postsToDelete.length > 0) {
-      await this.db
-        .deleteFrom('post')
-        .where('uri', 'in', postsToDelete)
-        .execute()
-    }
+    const postsToCreate = ops.posts.creates.map((create) => {
+      return {
+        uri: create.uri,
+        cid: create.cid,
+        text: create.record.text,
+        author: create.author,
+        indexedAt: new Date().toISOString(),
+        createdAt: create.record.createdAt,
+        content: JSON.stringify(create),
+      }
+    })
 
     if (postsToCreate.length > 0) {
       buffer = buffer.concat(postsToCreate)
