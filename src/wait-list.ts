@@ -210,6 +210,17 @@ const makeRouter = (ctx: AppContext) => {
         )
       }
 
+      if ('handle' in req.query && typeof req.query.handle === 'string') {
+        const did = await ctx.handleResolver.resolve(req.query.handle)
+        if (did) {
+          builder = builder.where('did', '=', did)
+        } else {
+          return res.status(404).json({
+            error: 'handle not found',
+          })
+        }
+      }
+
       const result = await builder.execute()
 
       return res.status(200).json(

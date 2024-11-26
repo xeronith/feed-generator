@@ -80,6 +80,21 @@ const run = async () => {
   }
 
   {
+    // get wait-list record for a specific handle
+
+    const getWaitListReportResponse = await axios.get(
+      `${waitListEndpoint}/report?handle=user.bsky.social`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      },
+    )
+
+    console.log(getWaitListReportResponse.data)
+  }
+
+  {
     // check wait list again
 
     // server recognizes the user based on authorization token
