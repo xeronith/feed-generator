@@ -55,28 +55,38 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
       if (this.cfg.localFirehose) {
         if (buffer.length >= 500) {
-          await this.cacheDb.write((connection) => {
-            const stmt = connection.prepare(
-              'INSERT INTO "post" ("uri", "author", "text", "indexedAt", "createdAt") VALUES (?, ?, ?, ?, ?)',
-            )
-
-            const transaction = connection.transaction((rows) => {
-              for (const row of rows) {
-                stmt.run(
-                  row.uri,
-                  row.author,
-                  row.text,
-                  row.indexedAt,
-                  row.createdAt,
-                )
-              }
-            })
-
-            transaction(buffer)
-          })
-
-          console.log('repo subscription local flush')
+          const data = [...buffer]
           buffer.length = 0
+
+          this.cacheDb
+            .write((connection) => {
+              const stmt = connection.prepare(
+                'INSERT INTO "post" ("uri", "author", "text", "indexedAt", "createdAt") VALUES (?, ?, ?, ?, ?)',
+              )
+
+              const transaction = connection.transaction((rows) => {
+                for (const row of rows) {
+                  stmt.run(
+                    row.uri,
+                    row.author,
+                    row.text,
+                    row.indexedAt,
+                    row.createdAt,
+                  )
+                }
+              })
+
+              transaction(data)
+            })
+            .then(() => {
+              console.log('repo subscription local flush:', data.length)
+            })
+            .catch((err) => {
+              console.error(
+                'repo subscription could not flush local buffer',
+                JSON.stringify(err, null, 4),
+              )
+            })
         }
       } else {
         const realtimeBuffer = buffer.map((e) => ({
