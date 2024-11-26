@@ -18,10 +18,16 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
 
       let errorMessage: string = ''
       try {
+        console.time('-> QUERY')
+      
         const stmt = connection.prepare(realtimeQueryBuilder.query)
         const realtimeResult = stmt.all(realtimeQueryBuilder.parameters)
 
+        console.timeEnd('-> QUERY')
+        
         cachedResult = realtimeResult.concat(cachedResult)
+
+        console.time('-> SORT')
 
         cachedResult.sort((x, y) => {
           const dateX = new Date(x.createdAt).getTime()
@@ -36,6 +42,8 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
 
           return dateY - dateX
         })
+
+        console.timeEnd('-> SORT')
 
         console.time('-> EXACT')
 
