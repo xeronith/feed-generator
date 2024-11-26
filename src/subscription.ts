@@ -14,6 +14,7 @@ let buffer: Post[] = []
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   protected bigquery: BigQuery
+  private lastLocalFlush: number
 
   constructor(
     public db: Database,
@@ -32,6 +33,14 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     }
 
     this.bigquery = new BigQuery(opts)
+    this.lastLocalFlush = new Date().getTime()
+  }
+
+  public isDelayed() {
+    return (
+      this.lastLocalFlush > 0 &&
+      new Date().getTime() - this.lastLocalFlush > 30 * 1000
+    )
   }
 
   async handleEvent(evt: RepoEvent) {
@@ -55,6 +64,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
       if (this.cfg.localFirehose) {
         if (buffer.length >= 500) {
+          console.debug('repo subscription local flush attempt')
+
           const data = [...buffer]
           buffer.length = 0
 
@@ -79,6 +90,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
               transaction(data)
             })
             .then(() => {
+              this.lastLocalFlush = new Date().getTime()
               console.log('repo subscription local flush:', data.length)
             })
             .catch((err) => {

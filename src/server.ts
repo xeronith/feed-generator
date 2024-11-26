@@ -22,6 +22,8 @@ import feed from './feed'
 import waitList from './wait-list'
 import log, { LogMiddleware } from './log'
 import { createUploader } from './uploader'
+import { CronJob } from 'cron'
+import { Telegram } from './util/telegram'
 
 export class FeedGenerator {
   public app: express.Application
@@ -118,6 +120,20 @@ export class FeedGenerator {
     if (this.cfg.firehoseEnabled) {
       this.firehose.run(this.cfg.subscriptionReconnectDelay)
     }
+
+    new CronJob(
+      '0/30 * * * * *',
+      () => {
+        if (this.firehose.isDelayed()) {
+          const message = `🚨 Firehose flush delayed on: ${this.cfg.port}`
+          console.warn(message)
+          Telegram.send(message)
+        }
+      },
+      null,
+      true,
+      'UTC',
+    )
 
     this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)
     await events.once(this.server, 'listening')
