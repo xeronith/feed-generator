@@ -122,7 +122,7 @@ export class FeedGenerator {
     }
 
     new CronJob(
-      '0/30 * * * * *',
+      '0/60 * * * * *',
       () => {
         if (this.firehose.isDelayed()) {
           const message = `🚨 Firehose flush delayed on: ${this.cfg.port}`
