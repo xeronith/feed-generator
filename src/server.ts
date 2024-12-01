@@ -122,12 +122,21 @@ export class FeedGenerator {
     }
 
     new CronJob(
-      '0/60 * * * * *',
+      '0 */2 * * * *',
       () => {
         if (this.firehose.isDelayed()) {
           const message = `🚨 Firehose flush delayed on: ${this.cfg.port}`
           console.warn(message)
           Telegram.send(message)
+            .catch((e) => {
+              console.error(e)
+            })
+            .finally(() => {
+              this.server?.close((err) => {
+                console.log('server closed')
+                process.exit(err ? 1 : 0)
+              })
+            })
         }
       },
       null,
