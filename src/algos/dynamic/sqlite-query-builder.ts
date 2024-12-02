@@ -7,6 +7,7 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
 
   const authors: string[] = [],
     values: string[] = [],
+    excludedValues: string[] = [],
     parameters: string[] = []
 
   if (Array.isArray(ctx.definition.authors)) {
@@ -17,12 +18,28 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     ctx.definition.hashtags.forEach((e) => values.push(`"${e}"`))
   }
 
+  if (Array.isArray(ctx.definition.excludedHashtags)) {
+    ctx.definition.excludedHashtags.forEach((e) =>
+      excludedValues.push(`"${e}"`),
+    )
+  }
+
   if (Array.isArray(ctx.definition.mentions)) {
     ctx.definition.mentions.forEach((e) => values.push(`"${e}"`))
   }
 
+  if (Array.isArray(ctx.definition.excludedMentions)) {
+    ctx.definition.excludedMentions.forEach((e) =>
+      excludedValues.push(`"${e}"`),
+    )
+  }
+
   if (Array.isArray(ctx.definition.search)) {
     ctx.definition.search.forEach((e) => values.push(`"${e}"`))
+  }
+
+  if (Array.isArray(ctx.definition.excludedSearch)) {
+    ctx.definition.excludedSearch.forEach((e) => excludedValues.push(`"${e}"`))
   }
 
   if (authors.length) {
@@ -36,10 +53,21 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     operator = ' '
   }
 
-  if (values.length) {
-    query += ` AND "text" MATCH ?`
-    log += ` AND "text" MATCH '${values.join(operator)}'`
-    parameters.push(values.join(operator))
+  if (values.length || excludedValues.length) {
+    let parameter = ''
+    if (values.length && excludedValues.length) {
+      parameter = `(${values.join(operator)}) NOT (${excludedValues.join(' ')})`
+    } else if (values.length) {
+      parameter = values.join(operator)
+    } else if (excludedValues.length) {
+      parameter = `NOT (${excludedValues.join(' ')})`
+    }
+
+    if (parameter) {
+      query += ` AND "text" MATCH ?`
+      log += ` AND "text" MATCH '${parameter}'`
+      parameters.push(parameter)
+    }
   }
 
   let ordering = ` ORDER BY "rowid" DESC`

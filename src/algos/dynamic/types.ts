@@ -11,8 +11,11 @@ export interface Definition {
   authors?: string[]
   blockedAuthors?: string[]
   hashtags?: string[]
+  excludedHashtags?: string[]
   mentions?: string[]
+  excludedMentions?: string[]
   search?: string[]
+  excludedSearch?: string[]
   includedAtUris?: string[]
   excludedAtUris?: string[]
   operator: string

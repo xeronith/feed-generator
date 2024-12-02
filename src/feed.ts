@@ -17,9 +17,12 @@ interface PostRequestBody {
   state?: string
   users: string[],
   blockedUsers: string[],
-  hashtags: string[]
+  hashtags: string[],
+  excludedHashtags: string[],
   mentions: string[]
+  excludedMentions: string[],
   search: string[]
+  excludedSearch: string[],
   includeAtUris: string[],
   excludeAtUris: string[]
 }
@@ -36,9 +39,12 @@ interface PutRequestBody {
   state?: string
   users: string[]
   blockedUsers: string[],
-  hashtags: string[]
+  hashtags: string[],
+  excludedHashtags: string[],
   mentions: string[]
+  excludedMentions: string[],
   search: string[],
+  excludedSearch: string[],
   includeAtUris: string[],
   excludeAtUris: string[]
 }
@@ -120,8 +126,11 @@ const makeRouter = (ctx: AppContext) => {
             users: definition.users ?? [],
             blockedUsers: definition.blockedUsers ?? [],
             hashtags: definition.hashtags ?? [],
+            excludedHashtags: definition.excludedHashtags ?? [],
             mentions: definition.mentions ?? [],
+            excludedMentions: definition.excludedMentions ?? [],
             search: definition.search ?? [],
+            excludedSearch: definition.excludedSearch ?? [],
             includedAtUris: definition.includedAtUris ?? [],
             excludedAtUris: definition.excludedAtUris ?? [],
             pinned: feed.pinned,
@@ -203,8 +212,11 @@ const makeRouter = (ctx: AppContext) => {
         users: definition.users ?? [],
         blockedUsers: definition.blockedUsers ?? [],
         hashtags: definition.hashtags ?? [],
+        excludedHashtags: definition.excludedHashtags ?? [],
         mentions: definition.mentions ?? [],
+        excludedMentions: definition.excludedMentions ?? [],
         search: definition.search ?? [],
+        excludedSearch: definition.excludedSearch ?? [],
         includedAtUris: definition.includedAtUris ?? [],
         excludedAtUris: definition.excludedAtUris ?? [],
         pinned: result.pinned,
@@ -250,7 +262,15 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
+   *               blockedUsers:
+   *                 type: array
+   *                 items:
+   *                   type: string
    *               hashtags:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *               excludedHashtags:
    *                 type: array
    *                 items:
    *                   type: string
@@ -258,7 +278,23 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
+   *               excludedMentions:
+   *                 type: array
+   *                 items:
+   *                   type: string
    *               search:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *               excludedSearch:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *               includedAtUris:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *               excludedAtUris:
    *                 type: array
    *                 items:
    *                   type: string
@@ -374,7 +410,15 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
+   *             blockedUsers:
+   *               type: array
+   *               items:
+   *                 type: string
    *             hashtags:
+   *               type: array
+   *               items:
+   *                 type: string
+   *             excludedHashtags:
    *               type: array
    *               items:
    *                 type: string
@@ -382,7 +426,23 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
+   *             excludedMentions:
+   *               type: array
+   *               items:
+   *                 type: string
    *             search:
+   *               type: array
+   *               items:
+   *                 type: string
+   *             excludedSearch:
+   *               type: array
+   *               items:
+   *                 type: string
+   *             includedAtUris:
+   *               type: array
+   *               items:
+   *                 type: string
+   *             excludedAtUris:
    *               type: array
    *               items:
    *                 type: string
@@ -558,6 +618,16 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
+      if ('excludedHashtags' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.excludedHashtags = payload.excludedHashtags
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
       if ('mentions' in payload) {
         modified++
         cacheInvalidated = true
@@ -568,11 +638,31 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
+      if ('excludedMentions' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.excludedMentions = payload.excludedMentions
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
       if ('search' in payload) {
         modified++
         cacheInvalidated = true
 
         definition.search = payload.search
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('excludedSearch' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.excludedSearch = payload.excludedSearch
         builder = builder.set({
           definition: JSON.stringify(definition),
         })

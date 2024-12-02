@@ -44,8 +44,11 @@ export const handler = async (
   const authors: string[] = []
   const blockedAuthors: string[] = []
   const hashtags: string[] = []
+  const excludedHashtags: string[] = []
   const mentions: string[] = []
+  const excludedMentions: string[] = []
   const search: string[] = []
+  const excludedSearch: string[] = []
   const includedAtUris: string[] = []
   const excludedAtUris: string[] = []
 
@@ -91,6 +94,14 @@ export const handler = async (
     })
   }
 
+  if (Array.isArray(definition.excludedHashtags)) {
+    definition.excludedHashtags.forEach((hashtag) => {
+      let value = hashtag.trim()
+      if (!value.startsWith('#')) value = `#${value}`
+      if (value) excludedHashtags.push(value)
+    })
+  }
+
   if (Array.isArray(definition.mentions)) {
     definition.mentions.forEach((mention) => {
       let value = mention.trim()
@@ -99,10 +110,25 @@ export const handler = async (
     })
   }
 
+  if (Array.isArray(definition.excludedMentions)) {
+    definition.excludedMentions.forEach((mention) => {
+      let value = mention.trim()
+      if (!value.startsWith('@')) value = `@${value}`
+      if (value) excludedMentions.push(value)
+    })
+  }
+
   if (Array.isArray(definition.search)) {
     definition.search.forEach((criteria) => {
       const value = criteria.trim()
       if (value) search.push(value)
+    })
+  }
+
+  if (Array.isArray(definition.excludedSearch)) {
+    definition.excludedSearch.forEach((criteria) => {
+      const value = criteria.trim()
+      if (value) excludedSearch.push(value)
     })
   }
 
