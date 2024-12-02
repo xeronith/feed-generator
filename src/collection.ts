@@ -128,8 +128,6 @@ const makeRouter = (ctx: AppContext) => {
    *           schema:
    *             type: object
    *             properties:
-   *               identifier:
-   *                 type: string
    *               displayName:
    *                 type: string
    *     responses:
