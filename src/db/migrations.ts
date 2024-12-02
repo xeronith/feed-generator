@@ -298,3 +298,21 @@ migrations['011'] = {
       .execute()
   },
 }
+
+migrations['012'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('collection')
+      .addColumn('identifier', 'varchar', (col) => col.primaryKey())
+      .addColumn('displayName', 'varchar', (col) => col.notNull())
+      .addColumn('parent', 'varchar', (col) => col.notNull())
+      .addColumn('did', 'varchar', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .addColumn('updatedAt', 'varchar', (col) => col.notNull())
+      .addColumn('deletedAt', 'varchar', (col) => col.notNull())
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('collection').execute()
+  },
+}

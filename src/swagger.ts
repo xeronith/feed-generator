@@ -48,7 +48,14 @@ For users, this should feel like visiting a page in the app. Once they subscribe
       },
     },
   },
-  apis: ['./src/feed.ts', './feed.js', './dist/feed.js'],
+  apis: [
+    './src/feed.ts',
+    './feed.js',
+    './dist/feed.js',
+    './src/collection.ts',
+    './collection.js',
+    './dist/collection.js',
+  ],
 }
 
 export const openapiSpecification = swaggerJsdoc(options)

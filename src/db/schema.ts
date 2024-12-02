@@ -1,6 +1,7 @@
 export type DatabaseSchema = {
   post: Post
   sub_state: SubState
+  collection: Collection
   feed: Feed
   cache: Cache
   query_log: QueryLog
@@ -22,6 +23,16 @@ export type Post = {
 export type SubState = {
   service: string
   cursor: number
+}
+
+export type Collection = {
+  identifier: string
+  displayName: string
+  parent: string
+  did: string
+  createdAt: string
+  updatedAt: string
+  deletedAt: string
 }
 
 export type Feed = {

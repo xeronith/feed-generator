@@ -10,6 +10,7 @@
     "unpublish": "ts-node scripts/unpublishFeed.ts",
     "resolve": "ts-node scripts/resolveHandle.ts",
     "profile": "ts-node scripts/getProfile.ts",
+    "collection": "ts-node scripts/collection.ts",
     "feed": "ts-node scripts/feed.ts",
     "wait-list": "ts-node scripts/waitList.ts",
     "fetch": "ts-node scripts/fetch.ts",

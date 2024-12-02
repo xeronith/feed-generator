@@ -19,6 +19,7 @@ import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import wellKnown from './well-known'
 import feed from './feed'
+import collection from './collection'
 import waitList from './wait-list'
 import log, { LogMiddleware } from './log'
 import { createUploader } from './uploader'
@@ -108,6 +109,7 @@ export class FeedGenerator {
     app.use(server.xrpc.router)
     app.use(wellKnown(ctx))
     app.use(express.json())
+    app.use(collection(ctx))
     app.use(feed(ctx))
     app.use(waitList(ctx))
     app.use(log(ctx))
