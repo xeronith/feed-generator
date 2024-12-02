@@ -121,28 +121,32 @@ export class FeedGenerator {
       this.firehose.run(this.cfg.subscriptionReconnectDelay)
     }
 
-    new CronJob(
-      '0 */2 * * * *',
-      () => {
-        if (this.firehose.isDelayed()) {
-          const message = `🚨 Firehose flush delayed on: ${this.cfg.port}`
-          console.warn(message)
-          Telegram.send(message)
-            .catch((e) => {
-              console.error(e)
-            })
-            .finally(() => {
-              this.server?.close((err) => {
-                console.log('server closed')
-                process.exit(err ? 1 : 0)
+    if (this.cfg.firehoseEnabled && this.cfg.localFirehose) {
+      new CronJob(
+        '0 */2 * * * *',
+        () => {
+          if (this.firehose.isDelayed()) {
+            const message = `🚨 Firehose flush delayed on: ${this.cfg.port}`
+            console.warn(message)
+            Telegram.send(message)
+              .catch((e) => {
+                console.error(e)
               })
-            })
-        }
-      },
-      null,
-      true,
-      'UTC',
-    )
+              .finally(() => {
+                this.server?.close((err) => {
+                  console.log('server closed')
+                  process.exit(err ? 1 : 0)
+                })
+              })
+          }
+        },
+        null,
+        true,
+        'UTC',
+      )
+
+      console.log('firehose monitor enabled')
+    }
 
     this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)
     await events.once(this.server, 'listening')
