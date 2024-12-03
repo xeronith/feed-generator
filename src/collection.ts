@@ -2,10 +2,14 @@ import express from 'express'
 import { Request, Response } from 'express'
 import { AppContext } from './config'
 import { handleError } from './util/errors'
-const crypto = require('crypto')
+import crypto from 'crypto'
 
 interface CollectionRequestBody {
   displayName: string
+}
+
+interface CollectionPostRequestBody {
+  atUri: string
 }
 
 const makeRouter = (ctx: AppContext) => {
@@ -98,9 +102,20 @@ const makeRouter = (ctx: AppContext) => {
           .executeTakeFirst()
 
         if (collection) {
+          const items = await ctx.db
+            .selectFrom('collection_item')
+            .select('item')
+            .where('collection', '=', identifier)
+            .where('did', '=', req['bsky'].did)
+            .where('deletedAt', '=', '')
+            .execute()
+
           const response = {
             identifier: collection.identifier,
             displayName: collection.displayName,
+            items: items.map((e) => ({
+              atUri: e.item,
+            })),
           }
 
           return res.status(200).json(response)
@@ -162,6 +177,71 @@ const makeRouter = (ctx: AppContext) => {
       displayName: payload.displayName,
     })
   })
+
+  /**
+   * @openapi
+   * /collections/{identifier}/posts:
+   *   post:
+   *     description: Adds post to a collection
+   *     tags: [Collection]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               atUri:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: Record created
+   */
+  router.post(
+    '/collections/:identifier/posts',
+    async (req: Request, res: Response) => {
+      const payload = req.body as CollectionPostRequestBody
+      const identifier = req.params.identifier
+
+      try {
+        const collection = await ctx.db
+          .selectFrom('collection')
+          .select('identifier')
+          .where('identifier', '=', identifier)
+          .where('did', '=', req['bsky'].did)
+          .where('deletedAt', '=', '')
+          .executeTakeFirst()
+
+        if (!collection) {
+          return res.sendStatus(404)
+        }
+
+        const timestamp = new Date().toISOString()
+
+        await ctx.db
+          .insertInto('collection_item')
+          .values({
+            collection: identifier,
+            item: payload.atUri ?? '',
+            did: req['bsky'].did,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            deletedAt: '',
+          })
+          .onConflict((e) => e.doNothing())
+          .execute()
+      } catch (error) {
+        return handleError(res, error)
+      }
+
+      return res.status(201).json({
+        identifier: identifier,
+        atUri: payload.atUri,
+      })
+    },
+  )
 
   /**
    * @openapi
@@ -230,6 +310,7 @@ const makeRouter = (ctx: AppContext) => {
       }
     },
   )
+
   /**
    * @openapi
    * /collections/{identifier}:
@@ -245,7 +326,7 @@ const makeRouter = (ctx: AppContext) => {
    *         schema:
    *           type: string
    *     responses:
-   *       204:
+   *       200:
    *         description: Collection deleted
    */
   router.delete(
@@ -270,6 +351,73 @@ const makeRouter = (ctx: AppContext) => {
           .updateTable('collection')
           .set({ deletedAt: new Date().toISOString() })
           .where('identifier', '=', identifier)
+          .where('did', '=', req['bsky'].did)
+          .where('deletedAt', '=', '')
+          .execute()
+      } catch (error) {
+        return handleError(res, error)
+      }
+
+      res.status(200).json({
+        status: 'deleted',
+      })
+    },
+  )
+
+  /**
+   * @openapi
+   * /collections/{identifier}/posts:
+   *   delete:
+   *     description: Delete an existing collection
+   *     tags: [Collection]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: identifier
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - in: query
+   *         name: atUri
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Collection deleted
+   */
+  router.delete(
+    '/collections/:identifier/posts',
+    async (req: Request, res: Response) => {
+      const identifier = req.params.identifier
+      const atUri = req.query.atUri
+
+      if (!atUri || typeof atUri !== 'string') {
+        return res.status(400).json({
+          error: 'atUri is required',
+        })
+      }
+
+      try {
+        const item = await ctx.db
+          .selectFrom('collection_item')
+          .select('item')
+          .where('collection', '=', identifier)
+          .where('item', '=', atUri)
+          .where('did', '=', req['bsky'].did)
+          .where('deletedAt', '=', '')
+          .executeTakeFirst()
+
+        if (!item) {
+          return res.sendStatus(404)
+        }
+
+        await ctx.db
+          .updateTable('collection_item')
+          .set({ deletedAt: new Date().toISOString() })
+          .where('collection', '=', identifier)
+          .where('item', '=', atUri)
           .where('did', '=', req['bsky'].did)
           .where('deletedAt', '=', '')
           .execute()

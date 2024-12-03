@@ -316,3 +316,21 @@ migrations['012'] = {
     await db.schema.dropTable('collection').execute()
   },
 }
+
+migrations['013'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('collection_item')
+      .addColumn('collection', 'varchar', (col) => col.notNull())
+      .addColumn('item', 'varchar', (col) => col.notNull())
+      .addColumn('did', 'varchar', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .addColumn('updatedAt', 'varchar', (col) => col.notNull())
+      .addColumn('deletedAt', 'varchar', (col) => col.notNull())
+      .addPrimaryKeyConstraint('collection_items_pk', ['collection', 'item'])
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('collection_item').execute()
+  },
+}

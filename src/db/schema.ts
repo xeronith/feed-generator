@@ -1,6 +1,7 @@
 export type DatabaseSchema = {
   post: Post
   sub_state: SubState
+  collection_item: CollectionItem
   collection: Collection
   feed: Feed
   cache: Cache
@@ -29,6 +30,15 @@ export type Collection = {
   identifier: string
   displayName: string
   parent: string
+  did: string
+  createdAt: string
+  updatedAt: string
+  deletedAt: string
+}
+
+export type CollectionItem = {
+  collection: string
+  item: string
   did: string
   createdAt: string
   updatedAt: string
