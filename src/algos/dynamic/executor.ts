@@ -68,24 +68,24 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
           })
         }
 
-        if (Array.isArray(ctx.definition.blockedAuthors)) {
-          const blockedAuthors = {}
-          ctx.definition.blockedAuthors.forEach((blockedAuthor) => {
-            blockedAuthors[blockedAuthor] = true
+        if (Array.isArray(ctx.definition.excludeAuthors)) {
+          const excludeAuthors = {}
+          ctx.definition.excludeAuthors.forEach((author) => {
+            excludeAuthors[author] = true
           })
 
           cachedResult = cachedResult.filter(
-            (row) => !blockedAuthors[row.author],
+            (row) => !excludeAuthors[row.author],
           )
         }
 
-        if (Array.isArray(ctx.definition.excludedAtUris)) {
-          const excludedAtUris = {}
-          ctx.definition.excludedAtUris.forEach((excludedAtUri) => {
-            excludedAtUris[excludedAtUri] = true
+        if (Array.isArray(ctx.definition.excludeAtUris)) {
+          const excludeAtUris = {}
+          ctx.definition.excludeAtUris.forEach((excludedAtUri) => {
+            excludeAtUris[excludedAtUri] = true
           })
 
-          cachedResult = cachedResult.filter((row) => !excludedAtUris[row.uri])
+          cachedResult = cachedResult.filter((row) => !excludeAtUris[row.uri])
         }
 
         console.timeEnd('-> EXACT')
@@ -125,8 +125,8 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
     post: item.uri,
   }))
 
-  if (Array.isArray(ctx.definition.includedAtUris)) {
-    ctx.definition.includedAtUris.forEach((uri) => {
+  if (Array.isArray(ctx.definition.atUris)) {
+    ctx.definition.atUris.forEach((uri) => {
       feed.unshift({ post: uri })
     })
   }

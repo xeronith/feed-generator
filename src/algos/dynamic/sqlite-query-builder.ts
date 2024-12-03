@@ -18,8 +18,8 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     ctx.definition.hashtags.forEach((e) => values.push(`"${e}"`))
   }
 
-  if (Array.isArray(ctx.definition.excludedHashtags)) {
-    ctx.definition.excludedHashtags.forEach((e) =>
+  if (Array.isArray(ctx.definition.excludeHashtags)) {
+    ctx.definition.excludeHashtags.forEach((e) =>
       excludedValues.push(`"${e}"`),
     )
   }
@@ -28,8 +28,8 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     ctx.definition.mentions.forEach((e) => values.push(`"${e}"`))
   }
 
-  if (Array.isArray(ctx.definition.excludedMentions)) {
-    ctx.definition.excludedMentions.forEach((e) =>
+  if (Array.isArray(ctx.definition.excludeMentions)) {
+    ctx.definition.excludeMentions.forEach((e) =>
       excludedValues.push(`"${e}"`),
     )
   }
@@ -38,8 +38,8 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     ctx.definition.search.forEach((e) => values.push(`"${e}"`))
   }
 
-  if (Array.isArray(ctx.definition.excludedSearch)) {
-    ctx.definition.excludedSearch.forEach((e) => excludedValues.push(`"${e}"`))
+  if (Array.isArray(ctx.definition.excludeSearch)) {
+    ctx.definition.excludeSearch.forEach((e) => excludedValues.push(`"${e}"`))
   }
 
   if (authors.length) {

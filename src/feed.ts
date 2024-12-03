@@ -16,14 +16,14 @@ interface PostRequestBody {
   type?: string
   state?: string
   users: string[],
-  blockedUsers: string[],
+  excludeUsers: string[],
   hashtags: string[],
-  excludedHashtags: string[],
+  excludeHashtags: string[],
   mentions: string[]
-  excludedMentions: string[],
+  excludeMentions: string[],
   search: string[]
-  excludedSearch: string[],
-  includeAtUris: string[],
+  excludeSearch: string[],
+  atUris: string[],
   excludeAtUris: string[]
 }
 
@@ -38,14 +38,14 @@ interface PutRequestBody {
   type?: string
   state?: string
   users: string[]
-  blockedUsers: string[],
+  excludeUsers: string[],
   hashtags: string[],
-  excludedHashtags: string[],
+  excludeHashtags: string[],
   mentions: string[]
-  excludedMentions: string[],
+  excludeMentions: string[],
   search: string[],
-  excludedSearch: string[],
-  includeAtUris: string[],
+  excludeSearch: string[],
+  atUris: string[],
   excludeAtUris: string[]
 }
 
@@ -124,15 +124,15 @@ const makeRouter = (ctx: AppContext) => {
             description: feed.description,
             avatar: feed.avatar,
             users: definition.users ?? [],
-            blockedUsers: definition.blockedUsers ?? [],
+            excludeUsers: definition.excludeUsers ?? [],
             hashtags: definition.hashtags ?? [],
-            excludedHashtags: definition.excludedHashtags ?? [],
+            excludeHashtags: definition.excludeHashtags ?? [],
             mentions: definition.mentions ?? [],
-            excludedMentions: definition.excludedMentions ?? [],
+            excludeMentions: definition.excludeMentions ?? [],
             search: definition.search ?? [],
-            excludedSearch: definition.excludedSearch ?? [],
-            includedAtUris: definition.includedAtUris ?? [],
-            excludedAtUris: definition.excludedAtUris ?? [],
+            excludeSearch: definition.excludeSearch ?? [],
+            atUris: definition.atUris ?? [],
+            excludeAtUris: definition.excludeAtUris ?? [],
             pinned: feed.pinned,
             bookmark: feed.bookmark,
             operator: definition.operator ?? 'OR',
@@ -210,15 +210,15 @@ const makeRouter = (ctx: AppContext) => {
         description: result.description,
         avatar: result.avatar,
         users: definition.users ?? [],
-        blockedUsers: definition.blockedUsers ?? [],
+        excludeUsers: definition.excludeUsers ?? [],
         hashtags: definition.hashtags ?? [],
-        excludedHashtags: definition.excludedHashtags ?? [],
+        excludeHashtags: definition.excludeHashtags ?? [],
         mentions: definition.mentions ?? [],
-        excludedMentions: definition.excludedMentions ?? [],
+        excludeMentions: definition.excludeMentions ?? [],
         search: definition.search ?? [],
-        excludedSearch: definition.excludedSearch ?? [],
-        includedAtUris: definition.includedAtUris ?? [],
-        excludedAtUris: definition.excludedAtUris ?? [],
+        excludeSearch: definition.excludeSearch ?? [],
+        atUris: definition.atUris ?? [],
+        excludeAtUris: definition.excludeAtUris ?? [],
         pinned: result.pinned,
         bookmark: result.bookmark,
         operator: definition.operator ?? 'OR',
@@ -262,7 +262,7 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
-   *               blockedUsers:
+   *               excludeUsers:
    *                 type: array
    *                 items:
    *                   type: string
@@ -270,7 +270,7 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
-   *               excludedHashtags:
+   *               excludeHashtags:
    *                 type: array
    *                 items:
    *                   type: string
@@ -278,7 +278,7 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
-   *               excludedMentions:
+   *               excludeMentions:
    *                 type: array
    *                 items:
    *                   type: string
@@ -286,15 +286,15 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
-   *               excludedSearch:
+   *               excludeSearch:
    *                 type: array
    *                 items:
    *                   type: string
-   *               includedAtUris:
+   *               atUris:
    *                 type: array
    *                 items:
    *                   type: string
-   *               excludedAtUris:
+   *               excludeAtUris:
    *                 type: array
    *                 items:
    *                   type: string
@@ -410,7 +410,7 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
-   *             blockedUsers:
+   *             excludeUsers:
    *               type: array
    *               items:
    *                 type: string
@@ -418,7 +418,7 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
-   *             excludedHashtags:
+   *             excludeHashtags:
    *               type: array
    *               items:
    *                 type: string
@@ -426,7 +426,7 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
-   *             excludedMentions:
+   *             excludeMentions:
    *               type: array
    *               items:
    *                 type: string
@@ -434,15 +434,15 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
-   *             excludedSearch:
+   *             excludeSearch:
    *               type: array
    *               items:
    *                 type: string
-   *             includedAtUris:
+   *             atUris:
    *               type: array
    *               items:
    *                 type: string
-   *             excludedAtUris:
+   *             excludeAtUris:
    *               type: array
    *               items:
    *                 type: string
@@ -598,11 +598,11 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
-      if ('blockedUsers' in payload) {
+      if ('excludeUsers' in payload) {
         modified++
         cacheInvalidated = true
 
-        definition.blockedUsers = payload.blockedUsers
+        definition.excludeUsers = payload.excludeUsers
         builder = builder.set({
           definition: JSON.stringify(definition),
         })
@@ -618,11 +618,11 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
-      if ('excludedHashtags' in payload) {
+      if ('excludeHashtags' in payload) {
         modified++
         cacheInvalidated = true
 
-        definition.excludedHashtags = payload.excludedHashtags
+        definition.excludeHashtags = payload.excludeHashtags
         builder = builder.set({
           definition: JSON.stringify(definition),
         })
@@ -638,11 +638,11 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
-      if ('excludedMentions' in payload) {
+      if ('excludeMentions' in payload) {
         modified++
         cacheInvalidated = true
 
-        definition.excludedMentions = payload.excludedMentions
+        definition.excludeMentions = payload.excludeMentions
         builder = builder.set({
           definition: JSON.stringify(definition),
         })
@@ -658,31 +658,31 @@ const makeRouter = (ctx: AppContext) => {
         })
       }
 
-      if ('excludedSearch' in payload) {
+      if ('excludeSearch' in payload) {
         modified++
         cacheInvalidated = true
 
-        definition.excludedSearch = payload.excludedSearch
+        definition.excludeSearch = payload.excludeSearch
         builder = builder.set({
           definition: JSON.stringify(definition),
         })
       }
 
-      if ('includedAtUris' in payload) {
+      if ('atUris' in payload) {
         modified++
         cacheInvalidated = true
 
-        definition.includedAtUris = payload.includedAtUris
+        definition.atUris = payload.atUris
         builder = builder.set({
           definition: JSON.stringify(definition),
         })
       }
 
-      if ('excludedAtUris' in payload) {
+      if ('excludeAtUris' in payload) {
         modified++
         cacheInvalidated = true
 
-        definition.excludedAtUris = payload.excludedAtUris
+        definition.excludeAtUris = payload.excludeAtUris
         builder = builder.set({
           definition: JSON.stringify(definition),
         })

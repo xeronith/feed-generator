@@ -42,15 +42,15 @@ export const handler = async (
   const definition: Definition = JSON.parse(record.definition)
 
   const authors: string[] = []
-  const blockedAuthors: string[] = []
+  const excludeAuthors: string[] = []
   const hashtags: string[] = []
-  const excludedHashtags: string[] = []
+  const excludeHashtags: string[] = []
   const mentions: string[] = []
-  const excludedMentions: string[] = []
+  const excludeMentions: string[] = []
   const search: string[] = []
-  const excludedSearch: string[] = []
-  const includedAtUris: string[] = []
-  const excludedAtUris: string[] = []
+  const excludeSearch: string[] = []
+  const atUris: string[] = []
+  const excludeAtUris: string[] = []
 
   if (Array.isArray(definition.users)) {
     const promises = definition.users.map(async (user: string) => {
@@ -68,12 +68,12 @@ export const handler = async (
     })
   }
 
-  if (Array.isArray(definition.blockedUsers)) {
-    const promises = definition.blockedUsers.map(
-      async (blockedUser: string) => {
-        const blockedAuthor = await ctx.handleResolver.resolve(blockedUser)
-        if (blockedAuthor) {
-          return blockedAuthor
+  if (Array.isArray(definition.excludeUsers)) {
+    const promises = definition.excludeUsers.map(
+      async (user: string) => {
+        const author = await ctx.handleResolver.resolve(user)
+        if (author) {
+          return author
         }
 
         return null
@@ -81,8 +81,8 @@ export const handler = async (
     )
 
     const resolvedPromises = await Promise.all(promises)
-    resolvedPromises.forEach((blockedAuthor) => {
-      if (blockedAuthor) blockedAuthors.push(blockedAuthor)
+    resolvedPromises.forEach((author) => {
+      if (author) excludeAuthors.push(author)
     })
   }
 
@@ -94,11 +94,11 @@ export const handler = async (
     })
   }
 
-  if (Array.isArray(definition.excludedHashtags)) {
-    definition.excludedHashtags.forEach((hashtag) => {
+  if (Array.isArray(definition.excludeHashtags)) {
+    definition.excludeHashtags.forEach((hashtag) => {
       let value = hashtag.trim()
       if (!value.startsWith('#')) value = `#${value}`
-      if (value) excludedHashtags.push(value)
+      if (value) excludeHashtags.push(value)
     })
   }
 
@@ -110,11 +110,11 @@ export const handler = async (
     })
   }
 
-  if (Array.isArray(definition.excludedMentions)) {
-    definition.excludedMentions.forEach((mention) => {
+  if (Array.isArray(definition.excludeMentions)) {
+    definition.excludeMentions.forEach((mention) => {
       let value = mention.trim()
       if (!value.startsWith('@')) value = `@${value}`
-      if (value) excludedMentions.push(value)
+      if (value) excludeMentions.push(value)
     })
   }
 
@@ -125,46 +125,46 @@ export const handler = async (
     })
   }
 
-  if (Array.isArray(definition.excludedSearch)) {
-    definition.excludedSearch.forEach((criteria) => {
+  if (Array.isArray(definition.excludeSearch)) {
+    definition.excludeSearch.forEach((criteria) => {
       const value = criteria.trim()
-      if (value) excludedSearch.push(value)
+      if (value) excludeSearch.push(value)
     })
   }
 
-  if (Array.isArray(definition.includedAtUris)) {
-    definition.includedAtUris.forEach((includedAtUri) => {
+  if (Array.isArray(definition.atUris)) {
+    definition.atUris.forEach((includedAtUri) => {
       const value = includedAtUri.trim()
-      if (value) includedAtUris.push(value)
+      if (value) atUris.push(value)
     })
   }
 
-  if (Array.isArray(definition.excludedAtUris)) {
-    definition.excludedAtUris.forEach((excludedAtUri) => {
+  if (Array.isArray(definition.excludeAtUris)) {
+    definition.excludeAtUris.forEach((excludedAtUri) => {
       const value = excludedAtUri.trim()
-      if (value) excludedAtUris.push(value)
+      if (value) excludeAtUris.push(value)
     })
   }
 
   if (
     authors.length === 0 &&
-    blockedAuthors.length === 0 &&
+    excludeAuthors.length === 0 &&
     hashtags.length === 0 &&
     mentions.length === 0 &&
     search.length === 0 &&
-    includedAtUris.length === 0 &&
-    excludedAtUris.length === 0
+    atUris.length === 0 &&
+    excludeAtUris.length === 0
   ) {
     return Nothing
   }
 
   definition.authors = authors
-  definition.blockedAuthors = blockedAuthors
+  definition.excludeAuthors = excludeAuthors
   definition.hashtags = hashtags
   definition.mentions = mentions
   definition.search = search
-  definition.includedAtUris = includedAtUris
-  definition.excludedAtUris = excludedAtUris
+  definition.atUris = atUris
+  definition.excludeAtUris = excludeAtUris
 
   return execute(
     { app: ctx, identity, identifier: identifier, definition },
