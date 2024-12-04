@@ -23,6 +23,12 @@ const makeRouter = (ctx: AppContext) => {
    *     tags: [Collection]
    *     security:
    *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: atUri
+   *         required: true
+   *         schema:
+   *           type: string
    *     responses:
    *       200:
    *         description: A list of collections
@@ -39,14 +45,34 @@ const makeRouter = (ctx: AppContext) => {
    *                     type: string
    */
   router.get('/collections', async (req: Request, res: Response) => {
+    const atUri = req.query.atUri
+
+    let selectedCollections: string[] = []
+    if (atUri && typeof atUri === 'string') {
+      const result = await ctx.db
+        .selectFrom('collection_item')
+        .select('collection')
+        .where('item', '=', atUri)
+        .where('did', '=', req['bsky'].did)
+        .where('deletedAt', '=', '')
+        .execute()
+
+      selectedCollections = result.map((item) => item.collection)
+    }
+
     try {
-      const collections = await ctx.db
+      let builder = ctx.db
         .selectFrom('collection')
         .select('identifier')
         .select('displayName')
         .where('did', '=', req['bsky'].did)
         .where('deletedAt', '=', '')
-        .execute()
+
+      if (atUri) {
+        builder = builder.where('identifier', 'in', selectedCollections)
+      }
+
+      const collections = await builder.execute()
 
       const response = collections.map((collection) => ({
         identifier: collection.identifier,

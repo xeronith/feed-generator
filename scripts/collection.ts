@@ -76,6 +76,14 @@ const run = async () => {
     // ],
   })
 
+  // get all collections for a specific uri
+  {
+    const getCollectionsResponse = await axios.get(
+      `${collectionEndpoint}/?atUri=at://did:plc:.../app.bsky.feed.post/...`,
+    )
+    console.log(getCollectionsResponse.data)
+  }
+
   // remove post from collection
   await axios.delete(
     `${collectionEndpoint}/${identifier}/posts?atUri=at://did:plc:.../app.bsky.feed.post/...`,
