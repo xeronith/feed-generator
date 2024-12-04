@@ -8,8 +8,11 @@ import { migrationProvider } from './migrations'
 import { Telegram } from '../util/telegram'
 
 export class ApplicationDatabase {
+  private primary: SqliteDb.Database
   private master: Database
+
   private replica: Database
+  private secondary: SqliteDb.Database
 
   constructor(cfg: Config) {
     const WAL = 'journal_mode = WAL'
@@ -37,19 +40,22 @@ export class ApplicationDatabase {
         }
       }
 
+      this.primary = primary
       this.master = new Kysely<DatabaseSchema>({
-        dialect: new SqliteDialect({ database: primary }),
+        dialect: new SqliteDialect({ database: this.primary }),
         log(event: any): void {
           replicate(secondary, event)
         },
       })
 
+      this.secondary = secondary
       this.replica = new Kysely<DatabaseSchema>({
-        dialect: new SqliteDialect({ database: secondary }),
+        dialect: new SqliteDialect({ database: this.secondary }),
       })
     } else {
+      this.primary = primary
       this.master = new Kysely<DatabaseSchema>({
-        dialect: new SqliteDialect({ database: primary }),
+        dialect: new SqliteDialect({ database: this.primary }),
       })
     }
 
@@ -89,6 +95,60 @@ export class ApplicationDatabase {
     const migrator = new Migrator({ db, provider: migrationProvider })
     const { error } = await migrator.migrateToLatest()
     if (error) throw error
+
+    this.primary.exec(
+      `
+        CREATE TABLE IF NOT EXISTS "audit_log" (
+          "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          "table" VARCHAR NOT NULL,
+          "createdAt" VARCHAR NOT NULL,
+          "record" JSON NOT NULL
+        )
+      `,
+    )
+
+    const tables = this.primary
+      .prepare(
+        `
+          SELECT "name" FROM "sqlite_master"
+          WHERE "type"='table'
+            AND "name" NOT LIKE 'sqlite_%'
+            AND "name" NOT LIKE 'kysely_%';
+        `,
+      )
+      .all()
+
+    tables.forEach((table: any) => {
+      if (table.name === 'audit_log' || table.name === 'cache') return
+
+      const columns = this.primary
+        .prepare(
+          `
+            SELECT "name"
+            FROM pragma_table_info('${table.name}')
+            ORDER BY "cid";
+          `,
+        )
+        .all()
+
+      const values = columns
+        .map((e: any) => `'${e.name}', OLD."${e.name}"`)
+        .join(', ')
+
+      this.primary.exec(
+        `
+          BEGIN;
+            DROP TRIGGER IF EXISTS "${table.name}_audit";
+            CREATE TRIGGER "${table.name}_audit"
+            BEFORE UPDATE ON "${table.name}"
+            BEGIN
+              INSERT INTO "audit_log" ("table", "createdAt", "record")
+              VALUES ('${table.name}', CURRENT_TIMESTAMP, JSON_OBJECT(${values}));
+            END;
+          COMMIT;
+        `,
+      )
+    })
   }
 }
 
