@@ -69,6 +69,11 @@ const run = async () => {
   // add post to collection
   await axios.post(`${collectionEndpoint}/${identifier}/posts`, {
     atUri: 'at://did:plc:.../app.bsky.feed.post/...',
+    // multiple posts can be added by passing an array
+    // atUri: [
+    //   'at://did:plc:.../app.bsky.feed.post/...',
+    //   'at://did:plc:.../app.bsky.feed.post/...',
+    // ],
   })
 
   // remove post from collection

@@ -9,7 +9,7 @@ interface CollectionRequestBody {
 }
 
 interface CollectionPostRequestBody {
-  atUri: string
+  atUri: string | string[]
 }
 
 const makeRouter = (ctx: AppContext) => {
@@ -202,8 +202,10 @@ const makeRouter = (ctx: AppContext) => {
   router.post(
     '/collections/:identifier/posts',
     async (req: Request, res: Response) => {
-      const payload = req.body as CollectionPostRequestBody
       const identifier = req.params.identifier
+      const payload = req.body as CollectionPostRequestBody
+      if (typeof payload.atUri === 'string')
+        payload.atUri = [payload.atUri ?? '']
 
       try {
         const collection = await ctx.db
@@ -219,17 +221,18 @@ const makeRouter = (ctx: AppContext) => {
         }
 
         const timestamp = new Date().toISOString()
-
         await ctx.db
           .insertInto('collection_item')
-          .values({
-            collection: identifier,
-            item: payload.atUri ?? '',
-            did: req['bsky'].did,
-            createdAt: timestamp,
-            updatedAt: timestamp,
-            deletedAt: '',
-          })
+          .values(
+            payload.atUri.map((uri) => ({
+              collection: identifier,
+              item: uri ?? '',
+              did: req['bsky'].did,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+              deletedAt: '',
+            })),
+          )
           .onConflict((e) => e.doNothing())
           .execute()
       } catch (error) {
