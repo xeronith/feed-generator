@@ -12,6 +12,11 @@ interface CollectionPostRequestBody {
   atUri: string | string[]
 }
 
+interface CollectionsPutRequestBody {
+  atUri: string
+  collections: string[]
+}
+
 const makeRouter = (ctx: AppContext) => {
   const router = express.Router()
 
@@ -271,6 +276,78 @@ const makeRouter = (ctx: AppContext) => {
       })
     },
   )
+
+  /**
+   * @openapi
+   * /collections:
+   *   put:
+   *     description: Update multiple collections
+   *     tags: [Collection]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               atUri:
+   *                 type: string
+   *               collections:
+   *                 type: array
+   *                 items:
+   *                    type: string
+   *     responses:
+   *       200:
+   *         description: Collections updated
+   */
+  router.put('/collections', async (req: Request, res: Response) => {
+    const payload = req.body as CollectionsPutRequestBody
+    if (!payload.collections.length) {
+      res.status(400).json({
+        error: 'collections required',
+      })
+    }
+
+    try {
+      payload.collections.forEach(async (identifier) => {
+        const collection = await ctx.db
+          .selectFrom('collection')
+          .select('identifier')
+          .where('identifier', '=', identifier)
+          .where('did', '=', req['bsky'].did)
+          .where('deletedAt', '=', '')
+          .executeTakeFirst()
+
+        if (!collection) {
+          return res.status(404).json({
+            error: 'collection not found',
+          })
+        }
+      })
+
+      const timestamp = new Date().toISOString()
+      await ctx.db
+        .insertInto('collection_item')
+        .values(
+          payload.collections.map((identifier) => ({
+            collection: identifier,
+            item: payload.atUri ?? '',
+            did: req['bsky'].did,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            deletedAt: '',
+          })),
+        )
+        .onConflict((e) => e.doNothing())
+        .execute()
+
+      return res.status(200).json(payload)
+    } catch (error) {
+      return handleError(res, error)
+    }
+  })
 
   /**
    * @openapi

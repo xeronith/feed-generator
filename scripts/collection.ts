@@ -76,6 +76,12 @@ const run = async () => {
     // ],
   })
 
+  // add post to multiple collection
+  await axios.put(collectionEndpoint, {
+    atUri: 'at://did:plc:.../app.bsky.feed.post/...',
+    collections: ['collection_identifier_1', 'collection_identifier_2', '...'],
+  })
+
   // get all collections for a specific uri
   {
     const getCollectionsResponse = await axios.get(
