@@ -184,6 +184,12 @@ const makeRouter = (ctx: AppContext) => {
     const payload = req.body as CollectionRequestBody
     const identifier = crypto.randomUUID()
 
+    if (!payload.displayName) {
+      res.status(400).json({
+        error: 'display name required',
+      })
+    }
+
     try {
       const timestamp = new Date().toISOString()
 
