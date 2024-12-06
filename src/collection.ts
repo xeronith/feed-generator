@@ -310,11 +310,6 @@ const makeRouter = (ctx: AppContext) => {
    */
   router.put('/collections', async (req: Request, res: Response) => {
     const payload = req.body as CollectionsPutRequestBody
-    if (!payload.collections.length) {
-      res.status(400).json({
-        error: 'collections required',
-      })
-    }
 
     try {
       payload.collections.forEach(async (identifier) => {
@@ -333,21 +328,35 @@ const makeRouter = (ctx: AppContext) => {
         }
       })
 
-      const timestamp = new Date().toISOString()
       await ctx.db
-        .insertInto('collection_item')
-        .values(
-          payload.collections.map((identifier) => ({
-            collection: identifier,
-            item: payload.atUri ?? '',
-            did: req['bsky'].did,
-            createdAt: timestamp,
-            updatedAt: timestamp,
-            deletedAt: '',
-          })),
-        )
-        .onConflict((e) => e.doNothing())
+        .updateTable('collection_item')
+        .set({ deletedAt: new Date().toISOString() })
+        .where('item', '=', payload.atUri ?? '')
+        .where('did', '=', req['bsky'].did)
+        .where('deletedAt', '=', '')
         .execute()
+
+      if (payload.collections.length) {
+        const timestamp = new Date().toISOString()
+        await ctx.db
+          .insertInto('collection_item')
+          .values(
+            payload.collections.map((identifier) => ({
+              collection: identifier,
+              item: payload.atUri ?? '',
+              did: req['bsky'].did,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+              deletedAt: '',
+            })),
+          )
+          .onConflict((e) =>
+            e.doUpdateSet({
+              deletedAt: '',
+            }),
+          )
+          .execute()
+      }
 
       return res.status(200).json(payload)
     } catch (error) {
