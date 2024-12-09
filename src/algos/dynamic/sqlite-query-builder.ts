@@ -56,11 +56,11 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   if (values.length || excludedValues.length) {
     let parameter = ''
     if (values.length && excludedValues.length) {
-      parameter = `(${values.join(operator)}) NOT (${excludedValues.join(' ')})`
+      parameter = `(${values.join(operator)}) NOT (${excludedValues.join(' OR ')})`
     } else if (values.length) {
       parameter = values.join(operator)
     } else if (excludedValues.length) {
-      parameter = `NOT (${excludedValues.join(' ')})`
+      parameter = `NOT (${excludedValues.join(' OR ')})`
     }
 
     if (parameter) {
