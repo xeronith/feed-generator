@@ -15,15 +15,17 @@ interface PostRequestBody {
   operator: string
   type?: string
   state?: string
-  users: string[],
-  excludeUsers: string[],
-  hashtags: string[],
-  excludeHashtags: string[],
+  users: string[]
+  authors: string[]
+  excludeUsers: string[]
+  excludeAuthors: string[]
+  hashtags: string[]
+  excludeHashtags: string[]
   mentions: string[]
-  excludeMentions: string[],
+  excludeMentions: string[]
   search: string[]
-  excludeSearch: string[],
-  atUris: string[],
+  excludeSearch: string[]
+  atUris: string[]
   excludeAtUris: string[]
 }
 
@@ -38,14 +40,16 @@ interface PutRequestBody {
   type?: string
   state?: string
   users: string[]
-  excludeUsers: string[],
-  hashtags: string[],
-  excludeHashtags: string[],
+  authors: string[]
+  excludeUsers: string[]
+  excludeAuthors: string[]
+  hashtags: string[]
+  excludeHashtags: string[]
   mentions: string[]
-  excludeMentions: string[],
-  search: string[],
-  excludeSearch: string[],
-  atUris: string[],
+  excludeMentions: string[]
+  search: string[]
+  excludeSearch: string[]
+  atUris: string[]
   excludeAtUris: string[]
 }
 
@@ -124,7 +128,9 @@ const makeRouter = (ctx: AppContext) => {
             description: feed.description,
             avatar: feed.avatar,
             users: definition.users ?? [],
+            authors: definition.authors ?? [],
             excludeUsers: definition.excludeUsers ?? [],
+            excludeAuthors: definition.excludeAuthors ?? [],
             hashtags: definition.hashtags ?? [],
             excludeHashtags: definition.excludeHashtags ?? [],
             mentions: definition.mentions ?? [],
@@ -210,7 +216,9 @@ const makeRouter = (ctx: AppContext) => {
         description: result.description,
         avatar: result.avatar,
         users: definition.users ?? [],
+        authors: definition.users ?? [],
         excludeUsers: definition.excludeUsers ?? [],
+        excludeAuthors: definition.excludeAuthors ?? [],
         hashtags: definition.hashtags ?? [],
         excludeHashtags: definition.excludeHashtags ?? [],
         mentions: definition.mentions ?? [],
@@ -262,7 +270,15 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
+   *               authors:
+   *                 type: array
+   *                 items:
+   *                   type: string
    *               excludeUsers:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *               excludeAuthors:
    *                 type: array
    *                 items:
    *                   type: string
@@ -410,7 +426,15 @@ const makeRouter = (ctx: AppContext) => {
    *               type: array
    *               items:
    *                 type: string
+   *             authors:
+   *               type: array
+   *               items:
+   *                 type: string
    *             excludeUsers:
+   *               type: array
+   *               items:
+   *                 type: string
+   *             excludeAuthors:
    *               type: array
    *               items:
    *                 type: string
@@ -597,12 +621,32 @@ const makeRouter = (ctx: AppContext) => {
           definition: JSON.stringify(definition),
         })
       }
+      
+      if ('authors' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.authors = payload.authors
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
 
       if ('excludeUsers' in payload) {
         modified++
         cacheInvalidated = true
 
         definition.excludeUsers = payload.excludeUsers
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('excludeAuthors' in payload) {
+        modified++
+        cacheInvalidated = true
+
+        definition.excludeAuthors = payload.excludeAuthors
         builder = builder.set({
           definition: JSON.stringify(definition),
         })

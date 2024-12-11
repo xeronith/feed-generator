@@ -52,6 +52,10 @@ export const handler = async (
   const atUris: string[] = []
   const excludeAtUris: string[] = []
 
+  if (Array.isArray(definition.authors)) {
+    authors.push(...definition.authors)
+  }
+
   if (Array.isArray(definition.users)) {
     const promises = definition.users.map(async (user: string) => {
       const author = await ctx.handleResolver.resolve(user)
@@ -66,6 +70,10 @@ export const handler = async (
     resolvedPromises.forEach((author) => {
       if (author) authors.push(author)
     })
+  }
+
+  if (Array.isArray(definition.excludeAuthors)) {
+    authors.push(...definition.excludeAuthors)
   }
 
   if (Array.isArray(definition.excludeUsers)) {
