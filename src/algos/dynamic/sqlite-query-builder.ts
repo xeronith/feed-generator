@@ -7,11 +7,16 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
 
   const authors: string[] = [],
     values: string[] = [],
-    excludedValues: string[] = [],
+    excludeAuthors: string[] = [],
+    excludeValues: string[] = [],
     parameters: string[] = []
 
   if (Array.isArray(ctx.definition.authors)) {
     ctx.definition.authors.forEach((e) => authors.push(`"${e}"`))
+  }
+
+  if (Array.isArray(ctx.definition.excludeAuthors)) {
+    ctx.definition.excludeAuthors.forEach((e) => excludeAuthors.push(`"${e}"`))
   }
 
   if (Array.isArray(ctx.definition.hashtags)) {
@@ -19,9 +24,7 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   }
 
   if (Array.isArray(ctx.definition.excludeHashtags)) {
-    ctx.definition.excludeHashtags.forEach((e) =>
-      excludedValues.push(`"${e}"`),
-    )
+    ctx.definition.excludeHashtags.forEach((e) => excludeValues.push(`"${e}"`))
   }
 
   if (Array.isArray(ctx.definition.mentions)) {
@@ -29,9 +32,7 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   }
 
   if (Array.isArray(ctx.definition.excludeMentions)) {
-    ctx.definition.excludeMentions.forEach((e) =>
-      excludedValues.push(`"${e}"`),
-    )
+    ctx.definition.excludeMentions.forEach((e) => excludeValues.push(`"${e}"`))
   }
 
   if (Array.isArray(ctx.definition.search)) {
@@ -39,28 +40,43 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   }
 
   if (Array.isArray(ctx.definition.excludeSearch)) {
-    ctx.definition.excludeSearch.forEach((e) => excludedValues.push(`"${e}"`))
+    ctx.definition.excludeSearch.forEach((e) => excludeValues.push(`"${e}"`))
   }
 
-  if (authors.length) {
-    query += ` AND "author" MATCH ?`
-    log += ` AND "author" MATCH '${authors.join(' OR ')}'`
-    parameters.push(authors.join(' OR '))
-  }
+  const AND = ' ',
+    OR = ' OR '
 
-  let operator = ' OR '
+  let operator = OR
   if (ctx.definition.operator === 'AND') {
-    operator = ' '
+    operator = AND
   }
 
-  if (values.length || excludedValues.length) {
+  if (authors.length || excludeAuthors.length) {
     let parameter = ''
-    if (values.length && excludedValues.length) {
-      parameter = `(${values.join(operator)}) NOT (${excludedValues.join(' OR ')})`
+
+    if (authors.length && excludeAuthors.length) {
+      parameter = `(${authors.join(OR)}) NOT (${excludeAuthors.join(OR)})`
+    } else if (authors.length) {
+      parameter = authors.join(OR)
+    } else if (excludeAuthors.length) {
+      parameter = `NOT (${excludeAuthors.join(OR)})`
+    }
+
+    if (parameter) {
+      query += ` AND "author" MATCH ?`
+      log += ` AND "author" MATCH '${parameter}'`
+      parameters.push(parameter)
+    }
+  }
+
+  if (values.length || excludeValues.length) {
+    let parameter = ''
+    if (values.length && excludeValues.length) {
+      parameter = `(${values.join(operator)}) NOT (${excludeValues.join(OR)})`
     } else if (values.length) {
       parameter = values.join(operator)
-    } else if (excludedValues.length) {
-      parameter = `NOT (${excludedValues.join(' OR ')})`
+    } else if (excludeValues.length) {
+      parameter = `NOT (${excludeValues.join(OR)})`
     }
 
     if (parameter) {
