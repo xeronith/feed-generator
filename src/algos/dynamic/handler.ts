@@ -73,7 +73,7 @@ export const handler = async (
   }
 
   if (Array.isArray(definition.excludeAuthors)) {
-    authors.push(...definition.excludeAuthors)
+    excludeAuthors.push(...definition.excludeAuthors)
   }
 
   if (Array.isArray(definition.excludeUsers)) {
