@@ -51,22 +51,27 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     operator = AND
   }
 
-  if (authors.length || excludeAuthors.length) {
+  if (authors.length) {
     let parameter = ''
-
-    if (authors.length && excludeAuthors.length) {
+    if (excludeAuthors.length) {
       parameter = `(${authors.join(OR)}) NOT (${excludeAuthors.join(OR)})`
-    } else if (authors.length) {
+    } else {
       parameter = authors.join(OR)
-    } else if (excludeAuthors.length) {
-      parameter = `NOT (${excludeAuthors.join(OR)})`
     }
 
-    if (parameter) {
-      query += ` AND "author" MATCH ?`
-      log += ` AND "author" MATCH '${parameter}'`
-      parameters.push(parameter)
-    }
+    query += ` AND "author" MATCH ?`
+    log += ` AND "author" MATCH '${parameter}'`
+    parameters.push(parameter)
+  } else if (excludeAuthors.length) {
+    query += ` AND "author" NOT IN (${excludeAuthors
+      .map(() => '?')
+      .join(', ')})`
+
+    log += ` AND "author" NOT IN (${excludeAuthors
+      .join(', ')
+      .replaceAll('"', "'")})`
+
+    parameters.push(...excludeAuthors.map((e) => e.replaceAll('"', '')))
   }
 
   if (values.length || excludeValues.length) {
