@@ -81,7 +81,7 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     } else if (values.length) {
       parameter = values.join(operator)
     } else if (excludeValues.length) {
-      parameter = `NOT (${excludeValues.join(OR)})`
+      parameter = `("a" OR "e" OR "i" OR "o" OR "u") NOT (${excludeValues.join(OR)})`
     }
 
     if (parameter) {
