@@ -24,7 +24,6 @@ import waitList from './wait-list'
 import log, { LogMiddleware } from './log'
 import { createUploader } from './uploader'
 import { CronJob } from 'cron'
-import { Telegram } from './util/telegram'
 
 export class FeedGenerator {
   public app: express.Application
