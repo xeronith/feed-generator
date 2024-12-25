@@ -7,40 +7,22 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
 
   const authors: string[] = [],
     values: string[] = [],
-    excludeAuthors: string[] = [],
-    excludeValues: string[] = [],
     parameters: string[] = []
 
   if (Array.isArray(ctx.definition.authors)) {
     ctx.definition.authors.forEach((e) => authors.push(`"${e}"`))
   }
 
-  if (Array.isArray(ctx.definition.excludeAuthors)) {
-    ctx.definition.excludeAuthors.forEach((e) => excludeAuthors.push(`"${e}"`))
-  }
-
   if (Array.isArray(ctx.definition.hashtags)) {
     ctx.definition.hashtags.forEach((e) => values.push(`"${e}"`))
-  }
-
-  if (Array.isArray(ctx.definition.excludeHashtags)) {
-    ctx.definition.excludeHashtags.forEach((e) => excludeValues.push(`"${e}"`))
   }
 
   if (Array.isArray(ctx.definition.mentions)) {
     ctx.definition.mentions.forEach((e) => values.push(`"${e}"`))
   }
 
-  if (Array.isArray(ctx.definition.excludeMentions)) {
-    ctx.definition.excludeMentions.forEach((e) => excludeValues.push(`"${e}"`))
-  }
-
   if (Array.isArray(ctx.definition.search)) {
     ctx.definition.search.forEach((e) => values.push(`"${e}"`))
-  }
-
-  if (Array.isArray(ctx.definition.excludeSearch)) {
-    ctx.definition.excludeSearch.forEach((e) => excludeValues.push(`"${e}"`))
   }
 
   const AND = ' ',
@@ -52,43 +34,17 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   }
 
   if (authors.length) {
-    let parameter = ''
-    if (excludeAuthors.length) {
-      parameter = `(${authors.join(OR)}) NOT (${excludeAuthors.join(OR)})`
-    } else {
-      parameter = authors.join(OR)
-    }
-
+    const parameter = authors.join(OR)
     query += ` AND "author" MATCH ?`
     log += ` AND "author" MATCH '${parameter}'`
     parameters.push(parameter)
-  } else if (excludeAuthors.length) {
-    query += ` AND "author" NOT IN (${excludeAuthors
-      .map(() => '?')
-      .join(', ')})`
-
-    log += ` AND "author" NOT IN (${excludeAuthors
-      .join(', ')
-      .replaceAll('"', "'")})`
-
-    parameters.push(...excludeAuthors.map((e) => e.replaceAll('"', '')))
   }
 
-  if (values.length || excludeValues.length) {
-    let parameter = ''
-    if (values.length && excludeValues.length) {
-      parameter = `(${values.join(operator)}) NOT (${excludeValues.join(OR)})`
-    } else if (values.length) {
-      parameter = values.join(operator)
-    } else if (excludeValues.length) {
-      parameter = `("a" OR "e" OR "i" OR "o" OR "u") NOT (${excludeValues.join(OR)})`
-    }
-
-    if (parameter) {
-      query += ` AND "text" MATCH ?`
-      log += ` AND "text" MATCH '${parameter}'`
-      parameters.push(parameter)
-    }
+  if (values.length) {
+    const parameter = values.join(operator)
+    query += ` AND "text" MATCH ?`
+    log += ` AND "text" MATCH '${parameter}'`
+    parameters.push(parameter)
   }
 
   let ordering = ` ORDER BY "rowid" DESC`

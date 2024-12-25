@@ -19,12 +19,12 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
       let errorMessage: string = ''
       try {
         console.time('-> QUERY')
-      
+
         const stmt = connection.prepare(realtimeQueryBuilder.query)
         const realtimeResult = stmt.all(realtimeQueryBuilder.parameters)
 
         console.timeEnd('-> QUERY')
-        
+
         cachedResult = realtimeResult.concat(cachedResult)
 
         console.time('-> SORT')
@@ -65,6 +65,31 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
             }
 
             return false
+          })
+        }
+
+        const excludeExacts: string[] = []
+        if (Array.isArray(ctx.definition.excludeSearch)) {
+          ctx.definition.excludeSearch.forEach((e) => excludeExacts.push(e.toUpperCase()))
+        }
+        
+        if (Array.isArray(ctx.definition.excludeMentions)) {
+          ctx.definition.excludeMentions.forEach((e) => excludeExacts.push(e.toUpperCase()))
+        }
+
+        if (Array.isArray(ctx.definition.excludeHashtags)) {
+          ctx.definition.excludeHashtags.forEach((e) => excludeExacts.push(e.toUpperCase()))
+        }
+
+        if (excludeExacts.length > 0) {
+          cachedResult = cachedResult.filter((row) => {
+            for (let i = 0; i < excludeExacts.length; i++) {
+              if (row.text.toUpperCase().indexOf(excludeExacts[i]) >= 0) {
+                return false
+              }
+            }
+
+            return true
           })
         }
 
