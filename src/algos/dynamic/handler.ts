@@ -77,16 +77,14 @@ export const handler = async (
   }
 
   if (Array.isArray(definition.excludeUsers)) {
-    const promises = definition.excludeUsers.map(
-      async (user: string) => {
-        const author = await ctx.handleResolver.resolve(user)
-        if (author) {
-          return author
-        }
+    const promises = definition.excludeUsers.map(async (user: string) => {
+      const author = await ctx.handleResolver.resolve(user)
+      if (author) {
+        return author
+      }
 
-        return null
-      },
-    )
+      return null
+    })
 
     const resolvedPromises = await Promise.all(promises)
     resolvedPromises.forEach((author) => {
@@ -158,8 +156,11 @@ export const handler = async (
     authors.length === 0 &&
     excludeAuthors.length === 0 &&
     hashtags.length === 0 &&
+    excludeHashtags.length === 0 &&
     mentions.length === 0 &&
+    excludeMentions.length === 0 &&
     search.length === 0 &&
+    excludeSearch.length === 0 &&
     atUris.length === 0 &&
     excludeAtUris.length === 0
   ) {
@@ -169,8 +170,11 @@ export const handler = async (
   definition.authors = authors
   definition.excludeAuthors = excludeAuthors
   definition.hashtags = hashtags
+  definition.excludeHashtags = excludeHashtags
   definition.mentions = mentions
+  definition.excludeMentions = excludeMentions
   definition.search = search
+  definition.excludeSearch = excludeSearch
   definition.atUris = atUris
   definition.excludeAtUris = excludeAtUris
 
