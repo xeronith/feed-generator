@@ -124,7 +124,7 @@ const makeRouter = (ctx: AppContext) => {
     }
 
     try {
-      let allowedToUseApp = 0,
+      let allowedToUseApp = 1,
         createdAt = new Date().toISOString()
 
       const emailAlreadyRegistered = await ctx.db
