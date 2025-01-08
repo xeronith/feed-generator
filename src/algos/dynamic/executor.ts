@@ -59,7 +59,14 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
         if (exacts.length > 0) {
           cachedResult = cachedResult.filter((row) => {
             for (let i = 0; i < exacts.length; i++) {
-              if (row.text.toUpperCase().indexOf(exacts[i]) >= 0) {
+              if (
+                row.text.toUpperCase().indexOf(exacts[i] + ' ') >= 0 ||
+                row.text.toUpperCase().indexOf(exacts[i] + '\t') >= 0 ||
+                row.text.toUpperCase().indexOf(exacts[i] + '\n') >= 0 ||
+                row.text.toUpperCase().indexOf(exacts[i] + '\r\n') >= 0 ||
+                row.text.toUpperCase().indexOf(exacts[i]) ===
+                  row.text.toUpperCase().length - exacts[i].length
+              ) {
                 return true
               }
             }
@@ -68,23 +75,50 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
           })
         }
 
-        const excludeExacts: string[] = []
+        const excludeSearch: string[] = []
         if (Array.isArray(ctx.definition.excludeSearch)) {
-          ctx.definition.excludeSearch.forEach((e) => excludeExacts.push(e.toUpperCase()))
+          ctx.definition.excludeSearch.forEach((e) =>
+            excludeSearch.push(e.toUpperCase()),
+          )
         }
-        
+
+        if (excludeSearch.length > 0) {
+          cachedResult = cachedResult.filter((row) => {
+            for (let i = 0; i < excludeSearch.length; i++) {
+              if (row.text.toUpperCase().indexOf(excludeSearch[i]) >= 0) {
+                return false
+              }
+            }
+
+            return true
+          })
+        }
+
+        const excludeExacts: string[] = []
         if (Array.isArray(ctx.definition.excludeMentions)) {
-          ctx.definition.excludeMentions.forEach((e) => excludeExacts.push(e.toUpperCase()))
+          ctx.definition.excludeMentions.forEach((e) =>
+            excludeExacts.push(e.toUpperCase()),
+          )
         }
 
         if (Array.isArray(ctx.definition.excludeHashtags)) {
-          ctx.definition.excludeHashtags.forEach((e) => excludeExacts.push(e.toUpperCase()))
+          ctx.definition.excludeHashtags.forEach((e) =>
+            excludeExacts.push(e.toUpperCase()),
+          )
         }
 
         if (excludeExacts.length > 0) {
           cachedResult = cachedResult.filter((row) => {
             for (let i = 0; i < excludeExacts.length; i++) {
-              if (row.text.toUpperCase().indexOf(excludeExacts[i]) >= 0) {
+              if (
+                row.text.toUpperCase().indexOf(excludeExacts[i] + ' ') >= 0 ||
+                row.text.toUpperCase().indexOf(excludeExacts[i] + '\t') >= 0 ||
+                row.text.toUpperCase().indexOf(excludeExacts[i] + '\n') >= 0 ||
+                row.text.toUpperCase().indexOf(excludeExacts[i] + '\r\n') >=
+                  0 ||
+                row.text.toUpperCase().indexOf(excludeExacts[i]) ===
+                  row.text.toUpperCase().length - excludeExacts[i].length
+              ) {
                 return false
               }
             }
