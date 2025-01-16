@@ -216,7 +216,7 @@ const makeRouter = (ctx: AppContext) => {
         description: result.description,
         avatar: result.avatar,
         users: definition.users ?? [],
-        authors: definition.users ?? [],
+        authors: definition.authors ?? [],
         excludeUsers: definition.excludeUsers ?? [],
         excludeAuthors: definition.excludeAuthors ?? [],
         hashtags: definition.hashtags ?? [],
