@@ -153,16 +153,14 @@ export const handler = async (
   }
 
   if (Array.isArray(definition.collections)) {
-    definition.collections.forEach(async (collection) => {
-      const result = await ctx.db
-        .selectFrom('collection_item')
-        .select('item')
-        .where('collection', '=', collection)
-        .where('deletedAt', '=', '')
-        .execute()
+    const result = await ctx.db
+      .selectFrom('collection_item')
+      .select('item')
+      .where('collection', 'in', definition.collections)
+      .where('deletedAt', '=', '')
+      .execute()
 
-      result.forEach((e) => atUris.push(e.item))
-    })
+    result.forEach((e) => atUris.push(e.item))
   }
 
   if (
