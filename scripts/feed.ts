@@ -65,6 +65,7 @@ const run = async () => {
     excludeSearch: ['not-nebula', 'not-galaxy', 'not-star'],
     atUris: ['at://did:plc:.../app.bsky.feed.post/...'],
     excludeAtUris: ['at://did:plc:.../app.bsky.feed.post/...'],
+    collections: ['collection1', 'collection2'],
     type: 'mixed',
     operator: 'AND', // defaults to OR if not provided
   })
@@ -101,6 +102,7 @@ const run = async () => {
     excludeSearch: ['not-nebula-modified', 'not-galaxy-modified', 'not-star-modified'],
     atUris: ['at://did:plc:.../app.bsky.feed.post/...'],
     excludeAtUris: ['at://did:plc:.../app.bsky.feed.post/...'],
+    collections: ['collection3', 'collection4', 'collection5'],
     operator: 'OR',
   })
 

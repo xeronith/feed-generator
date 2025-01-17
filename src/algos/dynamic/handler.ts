@@ -152,6 +152,19 @@ export const handler = async (
     })
   }
 
+  if (Array.isArray(definition.collections)) {
+    definition.collections.forEach(async (collection) => {
+      const result = await ctx.db
+        .selectFrom('collection_item')
+        .select('item')
+        .where('collection', '=', collection)
+        .where('deletedAt', '=', '')
+        .execute()
+
+      result.forEach((e) => atUris.push(e.item))
+    })
+  }
+
   if (
     authors.length === 0 &&
     excludeAuthors.length === 0 &&

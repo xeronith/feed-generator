@@ -27,6 +27,7 @@ interface PostRequestBody {
   excludeSearch: string[]
   atUris: string[]
   excludeAtUris: string[]
+  collections: string[]
 }
 
 interface PutRequestBody {
@@ -51,6 +52,7 @@ interface PutRequestBody {
   excludeSearch: string[]
   atUris: string[]
   excludeAtUris: string[]
+  collections: string[]
 }
 
 const makeRouter = (ctx: AppContext) => {
@@ -139,6 +141,7 @@ const makeRouter = (ctx: AppContext) => {
             excludeSearch: definition.excludeSearch ?? [],
             atUris: definition.atUris ?? [],
             excludeAtUris: definition.excludeAtUris ?? [],
+            collections: definition.collections ?? [],
             pinned: feed.pinned,
             bookmark: feed.bookmark,
             operator: definition.operator ?? 'OR',
@@ -227,6 +230,7 @@ const makeRouter = (ctx: AppContext) => {
         excludeSearch: definition.excludeSearch ?? [],
         atUris: definition.atUris ?? [],
         excludeAtUris: definition.excludeAtUris ?? [],
+        collections: definition.collections ?? [],
         pinned: result.pinned,
         bookmark: result.bookmark,
         operator: definition.operator ?? 'OR',
@@ -314,6 +318,10 @@ const makeRouter = (ctx: AppContext) => {
    *                 type: array
    *                 items:
    *                   type: string
+   *               collections:
+   *                 type: array
+   *                 items:
+   *                   type: string
    *               type:
    *                 type: string
    *               state:
@@ -348,6 +356,24 @@ const makeRouter = (ctx: AppContext) => {
       return res.status(400).json({
         error: 'invalid state',
       })
+    }
+
+    if ('collections' in payload && Array.isArray(payload.collections)) {
+      for (let i = 0; i < payload.collections.length; i++) {
+        const collection = await ctx.db
+          .selectFrom('collection')
+          .select('identifier')
+          .where('identifier', '=', payload.collections[i])
+          .where('did', '=', req['bsky'].did)
+          .where('deletedAt', '=', '')
+          .executeTakeFirst()
+
+        if (!collection) {
+          return res.status(400).json({
+            error: `invalid collection '${payload.collections[i]}'`,
+          })
+        }
+      }
     }
 
     if ('operator' in payload && typeof payload.operator === 'string') {
@@ -467,6 +493,10 @@ const makeRouter = (ctx: AppContext) => {
    *               items:
    *                 type: string
    *             excludeAtUris:
+   *               type: array
+   *               items:
+   *                 type: string
+   *             collections:
    *               type: array
    *               items:
    *                 type: string
@@ -621,7 +651,7 @@ const makeRouter = (ctx: AppContext) => {
           definition: JSON.stringify(definition),
         })
       }
-      
+
       if ('authors' in payload) {
         modified++
         cacheInvalidated = true
@@ -727,6 +757,32 @@ const makeRouter = (ctx: AppContext) => {
         cacheInvalidated = true
 
         definition.excludeAtUris = payload.excludeAtUris
+        builder = builder.set({
+          definition: JSON.stringify(definition),
+        })
+      }
+
+      if ('collections' in payload) {
+        for (let i = 0; i < payload.collections.length; i++) {
+          const collection = await ctx.db
+            .selectFrom('collection')
+            .select('identifier')
+            .where('identifier', '=', payload.collections[i])
+            .where('did', '=', req['bsky'].did)
+            .where('deletedAt', '=', '')
+            .executeTakeFirst()
+
+          if (!collection) {
+            return res.status(400).json({
+              error: `invalid collection '${payload.collections[i]}'`,
+            })
+          }
+        }
+
+        modified++
+        cacheInvalidated = true
+
+        definition.collections = payload.collections
         builder = builder.set({
           definition: JSON.stringify(definition),
         })

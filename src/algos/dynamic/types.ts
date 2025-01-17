@@ -18,6 +18,7 @@ export interface Definition {
   excludeSearch?: string[]
   atUris?: string[]
   excludeAtUris?: string[]
+  collections?: string[]
   operator: string
 }
 
