@@ -25,6 +25,40 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
     ctx.definition.search.forEach((e) => values.push(`"${e}"`))
   }
 
+  const finalizer = async (start: [number, number], errorMessage: string) => {
+    const diff = process.hrtime(start)
+    const duration = diff[0] * 1e3 + diff[1] * 1e-6
+
+    try {
+      const timestamp = new Date()
+      await ctx.app.db
+        .insertInto('query_log')
+        .values({
+          feedIdentifier: ctx.identifier,
+          userDid: ctx.identity.did,
+          userHandle: ctx.identity.handle,
+          target: 'Cache',
+          query: queryLog,
+          duration: duration,
+          successful: errorMessage ? 0 : 1,
+          errorMessage: errorMessage,
+          timestamp: timestamp.getTime(),
+          createdAt: timestamp.toISOString(),
+        })
+        .execute()
+    } catch (err) {
+      console.error('query log failed', err)
+    }
+  }
+
+  if (authors.length === 0 && values.length === 0) {
+    return {
+      query: `SELECT "uri", "text", "indexedAt", "createdAt" FROM "post" WHERE FALSE;`,
+      parameters: [],
+      finalize: finalizer,
+    }
+  }
+
   const AND = ' ',
     OR = ' OR '
 
@@ -59,30 +93,6 @@ export const buildQuery = (ctx: ExecutorContext, params: QueryParams) => {
   return {
     query: query,
     parameters: parameters,
-    finalize: async (start: [number, number], errorMessage: string) => {
-      const diff = process.hrtime(start)
-      const duration = diff[0] * 1e3 + diff[1] * 1e-6
-
-      try {
-        const timestamp = new Date()
-        await ctx.app.db
-          .insertInto('query_log')
-          .values({
-            feedIdentifier: ctx.identifier,
-            userDid: ctx.identity.did,
-            userHandle: ctx.identity.handle,
-            target: 'Cache',
-            query: queryLog,
-            duration: duration,
-            successful: errorMessage ? 0 : 1,
-            errorMessage: errorMessage,
-            timestamp: timestamp.getTime(),
-            createdAt: timestamp.toISOString(),
-          })
-          .execute()
-      } catch (err) {
-        console.error('query log failed', err)
-      }
-    },
+    finalize: finalizer,
   }
 }
