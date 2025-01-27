@@ -158,6 +158,7 @@ export const handler = async (
       .select('item')
       .where('collection', 'in', definition.collections)
       .where('deletedAt', '=', '')
+      .orderBy('createdAt')
       .execute()
 
     result.forEach((e) => atUris.push(e.item))

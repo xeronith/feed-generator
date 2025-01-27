@@ -60,6 +60,7 @@ const makeRouter = (ctx: AppContext) => {
         .where('item', '=', atUri)
         .where('did', '=', req['bsky'].did)
         .where('deletedAt', '=', '')
+        .orderBy('createdAt')
         .execute()
 
       selectedCollections = result.map((item) => item.collection)
@@ -139,6 +140,7 @@ const makeRouter = (ctx: AppContext) => {
             .where('collection', '=', identifier)
             .where('did', '=', req['bsky'].did)
             .where('deletedAt', '=', '')
+            .orderBy('createdAt')
             .execute()
 
           const response = {
