@@ -14,6 +14,7 @@
     "feed": "ts-node scripts/feed.ts",
     "wait-list": "ts-node scripts/waitList.ts",
     "fetch": "ts-node scripts/fetch.ts",
+    "search": "ts-node scripts/search.ts",
     "start": "ts-node src/index.ts",
     "build": "tsc"
   },
