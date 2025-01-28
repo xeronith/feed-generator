@@ -140,7 +140,7 @@ const makeRouter = (ctx: AppContext) => {
             .where('collection', '=', identifier)
             .where('did', '=', req['bsky'].did)
             .where('deletedAt', '=', '')
-            .orderBy('createdAt')
+            .orderBy('createdAt', 'desc')
             .execute()
 
           const response = {
