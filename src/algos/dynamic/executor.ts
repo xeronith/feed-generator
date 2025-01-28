@@ -57,22 +57,23 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
         }
 
         if (exacts.length > 0) {
-          cachedResult = cachedResult.filter((row) => {
-            for (let i = 0; i < exacts.length; i++) {
-              if (
-                row.text.toUpperCase().indexOf(exacts[i] + ' ') >= 0 ||
-                row.text.toUpperCase().indexOf(exacts[i] + '\t') >= 0 ||
-                row.text.toUpperCase().indexOf(exacts[i] + '\n') >= 0 ||
-                row.text.toUpperCase().indexOf(exacts[i] + '\r\n') >= 0 ||
-                row.text.toUpperCase().indexOf(exacts[i]) ===
-                  row.text.toUpperCase().length - exacts[i].length
-              ) {
-                return true
+          if (!ctx.definition.advanced || ctx.definition.operator === 'AND')
+            cachedResult = cachedResult.filter((row) => {
+              for (let i = 0; i < exacts.length; i++) {
+                if (
+                  row.text.toUpperCase().indexOf(exacts[i] + ' ') >= 0 ||
+                  row.text.toUpperCase().indexOf(exacts[i] + '\t') >= 0 ||
+                  row.text.toUpperCase().indexOf(exacts[i] + '\n') >= 0 ||
+                  row.text.toUpperCase().indexOf(exacts[i] + '\r\n') >= 0 ||
+                  row.text.toUpperCase().indexOf(exacts[i]) ===
+                    row.text.toUpperCase().length - exacts[i].length
+                ) {
+                  return true
+                }
               }
-            }
 
-            return false
-          })
+              return false
+            })
         }
 
         const excludeSearch: string[] = []

@@ -179,6 +179,15 @@ export const handler = async (
     return Nothing
   }
 
+  let conditions = 0
+  if (authors.length) conditions++
+  if (hashtags.length) conditions++
+  if (mentions.length) conditions++
+  if (search.length) conditions++
+  if (atUris.length) conditions++
+
+  if (conditions > 1) definition.advanced = true
+
   definition.authors = authors
   definition.excludeAuthors = excludeAuthors
   definition.hashtags = hashtags

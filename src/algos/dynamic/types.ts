@@ -20,6 +20,7 @@ export interface Definition {
   excludeAtUris?: string[]
   collections?: string[]
   operator: string
+  advanced: boolean
 }
 
 export type ExecutorContext = {
