@@ -3,6 +3,7 @@ import { ExecutorContext } from './types'
 import { buildQuery } from './sqlite-query-builder'
 import { timeMachine } from './time-machine'
 import { InProcCache, refreshCache } from './cache'
+import { containsExact } from '../../util/helpers'
 
 export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
   console.time('-> EXEC')
@@ -60,14 +61,7 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
           if (!ctx.definition.advanced || ctx.definition.operator === 'AND')
             cachedResult = cachedResult.filter((row) => {
               for (let i = 0; i < exacts.length; i++) {
-                if (
-                  row.text.toUpperCase().indexOf(exacts[i] + ' ') >= 0 ||
-                  row.text.toUpperCase().indexOf(exacts[i] + '\t') >= 0 ||
-                  row.text.toUpperCase().indexOf(exacts[i] + '\n') >= 0 ||
-                  row.text.toUpperCase().indexOf(exacts[i] + '\r\n') >= 0 ||
-                  row.text.toUpperCase().indexOf(exacts[i]) ===
-                    row.text.toUpperCase().length - exacts[i].length
-                ) {
+                if (containsExact(row.text.toUpperCase(), exacts[i])) {
                   return true
                 }
               }
@@ -111,15 +105,7 @@ export const execute = async (ctx: ExecutorContext, params: QueryParams) => {
         if (excludeExacts.length > 0) {
           cachedResult = cachedResult.filter((row) => {
             for (let i = 0; i < excludeExacts.length; i++) {
-              if (
-                row.text.toUpperCase().indexOf(excludeExacts[i] + ' ') >= 0 ||
-                row.text.toUpperCase().indexOf(excludeExacts[i] + '\t') >= 0 ||
-                row.text.toUpperCase().indexOf(excludeExacts[i] + '\n') >= 0 ||
-                row.text.toUpperCase().indexOf(excludeExacts[i] + '\r\n') >=
-                  0 ||
-                row.text.toUpperCase().indexOf(excludeExacts[i]) ===
-                  row.text.toUpperCase().length - excludeExacts[i].length
-              ) {
+              if (containsExact(row.text.toUpperCase(), excludeExacts[i])) {
                 return false
               }
             }

@@ -23,3 +23,17 @@ export const isValidJson = (input: string): boolean => {
     return false
   }
 }
+
+export const containsExact = (x: string, y: string) => {
+  if (
+    x.indexOf(`${y} `) >= 0 ||
+    x.indexOf(`${y}\t`) >= 0 ||
+    x.indexOf(`${y}\n`) >= 0 ||
+    x.indexOf(`${y}\r\n`) >= 0 ||
+    x.endsWith(y)
+  ) {
+    return true
+  }
+
+  return false
+}
