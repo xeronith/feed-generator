@@ -10,6 +10,7 @@ import { BigQuery } from '@google-cloud/bigquery'
 import { HandleResolver, DidResolver, MemoryCache } from '@atproto/identity'
 import { ApplicationDatabase } from './db'
 import { FirehoseSubscription } from './subscription'
+import { JetStreamSubscription } from './jetstream'
 import { AppContext, Config } from './config'
 import { AuthMiddleware } from './auth'
 import { CacheDatabase } from './db/cache'
@@ -30,17 +31,20 @@ export class FeedGenerator {
   public server?: http.Server
   private db: ApplicationDatabase
   public firehose: FirehoseSubscription
+  public jetStream: JetStreamSubscription
   public cfg: Config
 
   constructor(
     app: express.Application,
     db: ApplicationDatabase,
     firehose: FirehoseSubscription,
+    jetStream: JetStreamSubscription,
     cfg: Config,
   ) {
     this.app = app
     this.db = db
     this.firehose = firehose
+    this.jetStream = jetStream
     this.cfg = cfg
   }
 
@@ -83,6 +87,13 @@ export class FeedGenerator {
       cfg.subscriptionEndpoint,
     )
 
+    const jetStream = new JetStreamSubscription(
+      db.get(),
+      cacheDb,
+      cfg,
+      cfg.subscriptionEndpoint,
+    )
+
     const server = createServer({
       validateResponse: true,
       payload: {
@@ -113,20 +124,21 @@ export class FeedGenerator {
     app.use(waitList(ctx))
     app.use(log(ctx))
 
-    return new FeedGenerator(app, db, firehose, cfg)
+    return new FeedGenerator(app, db, firehose, jetStream, cfg)
   }
 
   async start(): Promise<http.Server> {
     await this.db.migrateToLatest()
     if (this.cfg.firehoseEnabled) {
-      this.firehose.run(this.cfg.subscriptionReconnectDelay)
+      // this.firehose.run(this.cfg.subscriptionReconnectDelay)
+      this.jetStream.run()
     }
 
     if (this.cfg.firehoseEnabled && this.cfg.localFirehose) {
       new CronJob(
         '0 */2 * * * *',
         () => {
-          if (this.firehose.isDelayed()) {
+          if (this.jetStream.isDelayed()) {
             console.warn(`🚨 Firehose flush delayed on: ${this.cfg.port}`)
             this.server?.close((err) => {
               console.log('server closed')
