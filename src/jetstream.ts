@@ -42,7 +42,7 @@ export class JetStreamSubscription {
     )
 
     jetStream.on('open', () => {
-      console.log('Connected to the JetStream server')
+      console.log('jet stream connected')
     })
 
     jetStream.on('message', (data: WebSocket.Data) => {
@@ -51,11 +51,11 @@ export class JetStreamSubscription {
     })
 
     jetStream.on('error', (error: Error) => {
-      console.error('JetStream error:', error.message)
+      console.error('jet stream error:', error.message)
     })
 
     jetStream.on('close', () => {
-      console.log('Disconnected from the JetStream server')
+      console.log('jet stream disconnected')
     })
   }
 
