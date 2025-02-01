@@ -10,7 +10,7 @@ let buffer: Post[] = []
 
 export class JetStreamSubscription {
   protected bigquery: BigQuery
-  private lastLocalFlush: number
+  private lastFlush: number
 
   constructor(
     public db: Database,
@@ -26,13 +26,18 @@ export class JetStreamSubscription {
     }
 
     this.bigquery = new BigQuery(opts)
-    this.lastLocalFlush = new Date().getTime()
+    this.lastFlush = new Date().getTime()
   }
 
   public isDelayed() {
+    let timeout = 90 * 1000
+    if (this.cfg.localFirehose) {
+      timeout = 30 * 1000
+    }
+    
     return (
-      this.lastLocalFlush > 0 &&
-      new Date().getTime() - this.lastLocalFlush > 30 * 1000
+      this.lastFlush > 0 &&
+      new Date().getTime() - this.lastFlush > timeout
     )
   }
 
@@ -124,7 +129,7 @@ export class JetStreamSubscription {
               transaction(data)
             })
             .then(() => {
-              this.lastLocalFlush = new Date().getTime()
+              this.lastFlush = new Date().getTime()
               console.log('repo subscription local flush:', data.length)
             })
             .catch((err) => {
@@ -169,6 +174,7 @@ export class JetStreamSubscription {
           }
 
           console.log('repo subscription flush attempted')
+          this.lastFlush = new Date().getTime()
           buffer.length = 0
         }
       }

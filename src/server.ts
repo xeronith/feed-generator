@@ -133,7 +133,7 @@ export class FeedGenerator {
       streamer.run(this.cfg.subscriptionReconnectDelay)
     }
 
-    if (this.cfg.firehoseEnabled && this.cfg.localFirehose) {
+    if (this.cfg.firehoseEnabled) {
       new CronJob(
         '0 */2 * * * *',
         () => {
