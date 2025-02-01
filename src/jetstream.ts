@@ -1,8 +1,3 @@
-import {
-  OutputSchema as RepoEvent,
-  isCommit,
-} from './lexicon/types/com/atproto/sync/subscribeRepos'
-import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import { BigQuery, BigQueryOptions } from '@google-cloud/bigquery'
 import { Post } from './db/schema'
 import { Config } from './config'
@@ -21,7 +16,6 @@ export class JetStreamSubscription {
     public db: Database,
     public cacheDb: CacheDatabase,
     public cfg: Config,
-    public service: string,
   ) {
     const opts: BigQueryOptions = {
       projectId: cfg.bigQueryProjectId,
@@ -42,9 +36,9 @@ export class JetStreamSubscription {
     )
   }
 
-  public run() {
+  public run(subscriptionReconnectDelay: number) {
     const jetStream = new WebSocket(
-      'wss://jetstream1.us-east.bsky.network/subscribe?wantedCollections=app.bsky.feed.post',
+      `${this.cfg.jetStreamEndpoint}/subscribe?wantedCollections=app.bsky.feed.post`,
     )
 
     jetStream.on('open', () => {
@@ -52,8 +46,8 @@ export class JetStreamSubscription {
     })
 
     jetStream.on('message', (data: WebSocket.Data) => {
-      const post = JSON.parse(data.toString())
-      this.handleEvent(post)
+      const message = JSON.parse(data.toString())
+      this.handleEvent(message)
     })
 
     jetStream.on('error', (error: Error) => {
@@ -65,40 +59,39 @@ export class JetStreamSubscription {
     })
   }
 
-  async handleEvent(post: any) {
-    if (
-      !post.kind ||
-      post.kind !== 'commit' ||
-      !post.commit ||
-      !post.commit.operation ||
-      post.commit.operation !== 'create'
-    ) {
-      return
+  async handleEvent(message: any) {
+    let posts: any[] = []
+    if (Array.isArray(message)) {
+      posts = posts.concat(message)
+    } else {
+      posts.push(message)
     }
 
-    const author = post?.did
-    const text = post?.commit?.record?.text
-    const createdAt = post?.commit?.record?.createdAt
-    const cid = post?.commit?.cid
+    const postsToCreate: Post[] = []
+    posts.forEach((post) => {
+      if (post.kind !== 'commit' || post.commit?.operation !== 'create') {
+        return
+      }
 
-    if (!author || !createdAt || !cid) {
-      console.error('invalid post', post)
-      return
-    }
+      const { did: author, commit } = post ?? {}
+      const { record, cid, rkey } = commit ?? {}
+      const { text, createdAt } = record ?? {}
 
-    const uri = `at://${author}/app.bsky.feed.post/${post.commit.rkey}`
+      if (!author || !createdAt || !cid || !rkey) {
+        console.error('invalid post', post)
+        return
+      }
 
-    const postsToCreate = [
-      {
-        uri: uri,
+      postsToCreate.push({
         cid: cid,
         text: text,
         author: author,
-        indexedAt: new Date().toISOString(),
         createdAt: createdAt,
+        indexedAt: new Date().toISOString(),
+        uri: `at://${author}/app.bsky.feed.post/${rkey}`,
         content: JSON.stringify(post),
-      },
-    ]
+      })
+    })
 
     if (postsToCreate.length > 0) {
       buffer = buffer.concat(postsToCreate)

@@ -11,7 +11,8 @@ const run = async () => {
   const cfg = {
     port: maybeInt(process.env.FEEDGEN_PORT) ?? 3000,
     listenhost: maybeStr(process.env.FEEDGEN_LISTENHOST) ?? '0.0.0.0',
-    sqliteLocation: maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? './data/feed.db',
+    sqliteLocation:
+      maybeStr(process.env.FEEDGEN_SQLITE_LOCATION) ?? './data/feed.db',
     sqliteReplicaLocation:
       maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? '',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
@@ -19,6 +20,9 @@ const run = async () => {
     subscriptionEndpoint:
       maybeStr(process.env.FEEDGEN_SUBSCRIPTION_ENDPOINT) ??
       'wss://bsky.network',
+    jetStreamEndpoint:
+      maybeStr(process.env.FEEDGEN_JET_STREAM_ENDPOINT) ??
+      'wss://jetstream1.us-east.bsky.network',
     publisherDid:
       maybeStr(process.env.FEEDGEN_PUBLISHER_DID) ?? 'did:example:alice',
     subscriptionReconnectDelay:

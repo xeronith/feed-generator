@@ -80,19 +80,8 @@ export class FeedGenerator {
       didCache,
     })
 
-    const firehose = new FirehoseSubscription(
-      db.get(),
-      cacheDb,
-      cfg,
-      cfg.subscriptionEndpoint,
-    )
-
-    const jetStream = new JetStreamSubscription(
-      db.get(),
-      cacheDb,
-      cfg,
-      cfg.subscriptionEndpoint,
-    )
+    const firehose = new FirehoseSubscription(db.get(), cacheDb, cfg)
+    const jetStream = new JetStreamSubscription(db.get(), cacheDb, cfg)
 
     const server = createServer({
       validateResponse: true,
@@ -131,7 +120,7 @@ export class FeedGenerator {
     await this.db.migrateToLatest()
     if (this.cfg.firehoseEnabled) {
       // this.firehose.run(this.cfg.subscriptionReconnectDelay)
-      this.jetStream.run()
+      this.jetStream.run(this.cfg.subscriptionReconnectDelay)
     }
 
     if (this.cfg.firehoseEnabled && this.cfg.localFirehose) {

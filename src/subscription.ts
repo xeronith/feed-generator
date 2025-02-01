@@ -20,9 +20,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     public db: Database,
     public cacheDb: CacheDatabase,
     public cfg: Config,
-    public service: string,
   ) {
-    super(db, service)
+    super(db, cfg.subscriptionEndpoint)
 
     const opts: BigQueryOptions = {
       projectId: cfg.bigQueryProjectId,

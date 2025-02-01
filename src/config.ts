@@ -31,6 +31,7 @@ export type Config = {
   firehoseEnabled: boolean
   localFirehose: boolean
   subscriptionEndpoint: string
+  jetStreamEndpoint: string
   serviceDid: string
   publisherDid: string
   subscriptionReconnectDelay: number
