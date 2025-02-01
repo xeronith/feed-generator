@@ -26,6 +26,11 @@ import log, { LogMiddleware } from './log'
 import { createUploader } from './uploader'
 import { CronJob } from 'cron'
 
+interface Streamer {
+  run(subscriptionReconnectDelay: number): void
+  isDelayed(): boolean
+}
+
 export class FeedGenerator {
   public app: express.Application
   public server?: http.Server
@@ -118,17 +123,22 @@ export class FeedGenerator {
 
   async start(): Promise<http.Server> {
     await this.db.migrateToLatest()
+
+    let streamer: Streamer = this.jetStream
     if (this.cfg.firehoseEnabled) {
-      // this.firehose.run(this.cfg.subscriptionReconnectDelay)
-      this.jetStream.run(this.cfg.subscriptionReconnectDelay)
+      if (this.cfg.jetStreamDisabled) {
+        streamer = this.firehose
+      }
+
+      streamer.run(this.cfg.subscriptionReconnectDelay)
     }
 
     if (this.cfg.firehoseEnabled && this.cfg.localFirehose) {
       new CronJob(
         '0 */2 * * * *',
         () => {
-          if (this.jetStream.isDelayed()) {
-            console.warn(`🚨 Firehose flush delayed on: ${this.cfg.port}`)
+          if (streamer.isDelayed()) {
+            console.warn(`🚨 streamer flush delayed on: ${this.cfg.port}`)
             this.server?.close((err) => {
               console.log('server closed')
               process.exit(err ? 1 : 0)
@@ -140,7 +150,7 @@ export class FeedGenerator {
         'UTC',
       )
 
-      console.log('firehose monitor enabled')
+      console.log('streamer monitor enabled')
     }
 
     this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)

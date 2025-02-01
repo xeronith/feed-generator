@@ -29,6 +29,7 @@ export type Config = {
   cacheCleanupPageSize: number
   maxInterval: number
   firehoseEnabled: boolean
+  jetStreamDisabled: boolean
   localFirehose: boolean
   subscriptionEndpoint: string
   jetStreamEndpoint: string

@@ -16,6 +16,7 @@ const run = async () => {
     sqliteReplicaLocation:
       maybeStr(process.env.FEEDGEN_SQLITE_REPLICA_LOCATION) ?? '',
     firehoseEnabled: maybeBoolean(process.env.FEEDGEN_FIREHOSE_ENABLED),
+    jetStreamDisabled: maybeBoolean(process.env.FEEDGEN_JET_STREAM_DISABLED),
     localFirehose: maybeBoolean(process.env.FEEDGEN_LOCAL_FIREHOSE),
     subscriptionEndpoint:
       maybeStr(process.env.FEEDGEN_SUBSCRIPTION_ENDPOINT) ??
