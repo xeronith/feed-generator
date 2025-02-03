@@ -15,9 +15,11 @@ class TelegramBot {
     this.bot = new TelegramBotAPI(this.token)
   }
 
-  public async send(message: string) {
+  public send(message: string) {
     if (!this.token || !this.chatId) return
-    return this.bot.sendMessage(this.chatId, message)
+    this.bot
+      .sendMessage(this.chatId, message)
+      .catch((err) => console.error(`Telegram error: ${err.message}`))
   }
 }
 

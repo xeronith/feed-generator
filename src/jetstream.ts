@@ -4,6 +4,7 @@ import { Config } from './config'
 import WebSocket from 'ws'
 import { Database } from './db'
 import { CacheDatabase } from './db/cache'
+import { Telegram } from './util/telegram'
 import path from 'path'
 
 let buffer: Post[] = []
@@ -11,6 +12,8 @@ let buffer: Post[] = []
 export class JetStreamSubscription {
   protected bigquery: BigQuery
   private lastFlush: number
+  private bufferFlushFailCount: number = 0
+  private bufferFlushFailureBackoff: number = 10
 
   constructor(
     public db: Database,
@@ -34,11 +37,8 @@ export class JetStreamSubscription {
     if (this.cfg.localFirehose) {
       timeout = 30 * 1000
     }
-    
-    return (
-      this.lastFlush > 0 &&
-      new Date().getTime() - this.lastFlush > timeout
-    )
+
+    return this.lastFlush > 0 && new Date().getTime() - this.lastFlush > timeout
   }
 
   public run(subscriptionReconnectDelay: number) {
@@ -135,7 +135,7 @@ export class JetStreamSubscription {
             .catch((err) => {
               console.error(
                 'repo subscription could not flush local buffer',
-                JSON.stringify(err, null, 4),
+                err.message,
               )
             })
         }
@@ -156,8 +156,18 @@ export class JetStreamSubscription {
             .catch((err) => {
               console.error(
                 'repo subscription could not flush buffer',
-                JSON.stringify(err, null, 4),
+                err.message,
               )
+
+              this.bufferFlushFailCount++
+              if (this.bufferFlushFailCount > this.bufferFlushFailureBackoff) {
+                const message = `🚨 Buffer flush failed: ${err.message}`
+                console.error(message)
+                Telegram.send(message)
+
+                this.bufferFlushFailureBackoff *= 4
+                this.bufferFlushFailCount = 0
+              }
             })
 
           if (this.cfg.bigQueryRealtimeEnabled) {
@@ -168,7 +178,7 @@ export class JetStreamSubscription {
               .catch((err) => {
                 console.error(
                   'repo subscription could not flush realtime buffer',
-                  JSON.stringify(err, null, 4),
+                  err.message,
                 )
               })
           }

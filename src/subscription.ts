@@ -8,6 +8,7 @@ import { Post } from './db/schema'
 import { Config } from './config'
 import { Database } from './db'
 import { CacheDatabase } from './db/cache'
+import { Telegram } from './util/telegram'
 import path from 'path'
 
 let buffer: Post[] = []
@@ -15,6 +16,8 @@ let buffer: Post[] = []
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   protected bigquery: BigQuery
   private lastLocalFlush: number
+  private bufferFlushFailCount: number = 0
+  private bufferFlushFailureBackoff: number = 10
 
   constructor(
     public db: Database,
@@ -95,7 +98,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
             .catch((err) => {
               console.error(
                 'repo subscription could not flush local buffer',
-                JSON.stringify(err, null, 4),
+                err.message,
               )
             })
         }
@@ -116,8 +119,18 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
             .catch((err) => {
               console.error(
                 'repo subscription could not flush buffer',
-                JSON.stringify(err, null, 4),
+                err.message,
               )
+
+              this.bufferFlushFailCount++
+              if (this.bufferFlushFailCount > this.bufferFlushFailureBackoff) {
+                const message = `🚨 Buffer flush failed: ${err.message}`
+                console.error(message)
+                Telegram.send(message)
+
+                this.bufferFlushFailureBackoff *= 4
+                this.bufferFlushFailCount = 0
+              }
             })
 
           if (this.cfg.bigQueryRealtimeEnabled) {
@@ -128,7 +141,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
               .catch((err) => {
                 console.error(
                   'repo subscription could not flush realtime buffer',
-                  JSON.stringify(err, null, 4),
+                  err.message,
                 )
               })
           }
