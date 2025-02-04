@@ -21,6 +21,7 @@ import describeGenerator from './methods/describe-generator'
 import wellKnown from './well-known'
 import feed from './feed'
 import collection from './collection'
+import moderator from './moderator'
 import waitList from './wait-list'
 import log, { LogMiddleware } from './log'
 import { createUploader } from './uploader'
@@ -116,6 +117,7 @@ export class FeedGenerator {
     app.use(collection(ctx))
     app.use(feed(ctx))
     app.use(waitList(ctx))
+    app.use(moderator(ctx))
     app.use(log(ctx))
 
     return new FeedGenerator(app, db, firehose, jetStream, cfg)

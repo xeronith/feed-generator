@@ -24,6 +24,7 @@ const run = async () => {
     jetStreamEndpoint:
       maybeStr(process.env.FEEDGEN_JET_STREAM_ENDPOINT) ??
       'wss://jetstream1.us-east.bsky.network',
+    moderatorEndpoint: maybeStr(process.env.FEEDGEN_MODERATOR_ENDPOINT) ?? '',
     publisherDid:
       maybeStr(process.env.FEEDGEN_PUBLISHER_DID) ?? 'did:example:alice',
     subscriptionReconnectDelay:

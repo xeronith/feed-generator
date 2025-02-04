@@ -33,6 +33,7 @@ export type Config = {
   localFirehose: boolean
   subscriptionEndpoint: string
   jetStreamEndpoint: string
+  moderatorEndpoint: string
   serviceDid: string
   publisherDid: string
   subscriptionReconnectDelay: number
